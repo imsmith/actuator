@@ -28,6 +28,11 @@ defmodule ActuatorWeb.Router do
     live "/transducers/new", TransducerLive.Form, :new
     live "/transducers/:id", TransducerLive.Show, :show
     live "/transducers/:id/edit", TransducerLive.Form, :edit
+
+    live "/api_specs", ApiSpecLive.Index, :index
+    live "/api_specs/new", ApiSpecLive.Form, :new
+    live "/api_specs/:id", ApiSpecLive.Show, :show
+    live "/api_specs/:id/edit", ApiSpecLive.Form, :edit
   end
 
   pipeline :api do
