@@ -63,6 +63,7 @@ defmodule Actuator.Transducers.Instances do
     name_with_meta = {:via, Registry, {@registry, name, %{entry_place: t.entry_place}}}
 
     journal = fn event ->
+      Actuator.Transducers.Telemetry.journal(name, event)
       Phoenix.PubSub.broadcast(Actuator.PubSub, topic(name), {:transducer, name, event})
     end
 

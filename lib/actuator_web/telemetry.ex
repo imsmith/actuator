@@ -52,6 +52,12 @@ defmodule ActuatorWeb.Telemetry do
         unit: {:native, :millisecond}
       ),
 
+      # Transducer Metrics
+      counter("actuator.transducer.fired.count", tags: [:transducer, :transition]),
+      counter("actuator.transducer.failed.count", tags: [:transducer, :transition]),
+      counter("actuator.listener.accepted.count", tags: [:transducer]),
+      counter("actuator.listener.rejected.count", tags: [:transducer, :reason]),
+
       # Database Metrics
       summary("actuator.repo.query.total_time",
         unit: {:native, :millisecond},

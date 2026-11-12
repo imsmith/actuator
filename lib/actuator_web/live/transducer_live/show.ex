@@ -78,7 +78,7 @@ defmodule ActuatorWeb.TransducerLive.Show do
 
       <section id="source" class="space-y-2">
         <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Source</h2>
-        <pre class="text-xs bg-base-200 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation>{@transducer.source}</pre>
+        <pre class="text-xs bg-base-200 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @transducer.source %></pre>
       </section>
     </Layouts.app>
     """
