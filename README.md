@@ -90,6 +90,34 @@ transition handle {
 Entry place `inbox`. Bind `handle` to an operation on the transducer page
 once an API spec exists, and the request body is sent to that operation.
 
+## Demo: a lamp to transduce
+
+`demo/lamp.tcl` is a pretend device with an HTTP API and an OpenAPI spec, so
+there is something real to drive. In one terminal:
+
+```sh
+tclsh demo/lamp.tcl        # http://localhost:4100, prints every state change
+```
+
+Then, in the admin UI:
+
+1. API specs, New: name `lamp`, paste `curl http://localhost:4100/openapi.json`.
+2. Transducers, New: name `lights`, entry place `inbox`, the source above.
+3. On the `lights` page, bind `handle` to `lamp:setState`.
+
+Now a listener request changes the lamp, and the lamp says so:
+
+```sh
+curl -X POST http://localhost:4000/t/lights \
+  -H "Authorization: Bearer dev-token" \
+  -H "Content-Type: application/json" \
+  -d '{"id": "lamp-2", "state": "on"}'
+# lamp terminal:  14:03:21  lamp-2: off -> on
+```
+
+The `id` fills the `{id}` path parameter, `state` goes in the JSON body, and
+the lamp's response lands on `done` with the token.
+
 ## Configuration
 
 | Setting | Dev and test | Prod |
