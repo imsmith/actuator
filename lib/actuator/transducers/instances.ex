@@ -20,14 +20,26 @@ defmodule Actuator.Transducers.Instances do
     ]
   end
 
+  @typedoc "What the registry holds alongside the pid."
+  @type meta :: %{entry_place: String.t()}
+
   @doc "`:via` name for a transducer's instance."
   @spec via(String.t()) :: {:via, Registry, {module, String.t()}}
   def via(name), do: {:via, Registry, {@registry, name}}
 
   @spec lookup(String.t()) :: pid | nil
   def lookup(name) do
+    case lookup_meta(name) do
+      {pid, _} -> pid
+      nil -> nil
+    end
+  end
+
+  @doc "Pid and registry metadata for a running instance."
+  @spec lookup_meta(String.t()) :: {pid, meta} | nil
+  def lookup_meta(name) do
     case Registry.lookup(@registry, name) do
-      [{pid, _}] -> pid
+      [{pid, meta}] -> {pid, meta}
       [] -> nil
     end
   end
@@ -35,7 +47,8 @@ defmodule Actuator.Transducers.Instances do
   @doc "Starts the instance for a transducer. Already running is `{:ok, pid}` too."
   @spec start(Transducer.t()) :: {:ok, pid} | {:error, term}
   def start(%Transducer{name: name} = t) do
-    spec = {ExCpn.Instance, net: Transducer.net(t), name: via(name)}
+    name_with_meta = {:via, Registry, {@registry, name, %{entry_place: t.entry_place}}}
+    spec = {ExCpn.Instance, net: Transducer.net(t), name: name_with_meta}
 
     case DynamicSupervisor.start_child(@supervisor, spec) do
       {:ok, pid} -> {:ok, pid}

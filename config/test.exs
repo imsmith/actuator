@@ -10,6 +10,9 @@ config :actuator, Actuator.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 5
 
+# Single admin bearer token for the listener API.
+config :actuator, api_token: "dev-token"
+
 # Instances are started explicitly by tests, not from the table at boot.
 config :actuator, start_transducers: false
 

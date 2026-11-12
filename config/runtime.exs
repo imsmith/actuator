@@ -48,6 +48,11 @@ if config_env() == :prod do
       For example: /var/lib/actuator/actuator.db
       """
 
+  config :actuator,
+    api_token:
+      System.get_env("ACTUATOR_API_TOKEN") ||
+        raise("environment variable ACTUATOR_API_TOKEN is missing")
+
   config :actuator, Actuator.Repo,
     database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")

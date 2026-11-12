@@ -12,6 +12,13 @@ defmodule ActuatorWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug ActuatorWeb.Plugs.ApiAuth
+  end
+
+  scope "/t", ActuatorWeb do
+    pipe_through :api
+
+    post "/:name", TransducerController, :actuate
   end
 
   scope "/", ActuatorWeb do

@@ -1,5 +1,8 @@
 import Config
 
+# Single admin bearer token for the listener API.
+config :actuator, api_token: "dev-token"
+
 # Configure your database
 config :actuator, Actuator.Repo,
   database: Path.expand("../actuator_dev.db", __DIR__),
