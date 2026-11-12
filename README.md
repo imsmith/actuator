@@ -102,10 +102,12 @@ once an API spec exists, and the request body is sent to that operation.
 
 ```sh
 mix precommit   # compile --warnings-as-errors, unused deps, format, test
+mix quality     # credo --strict, sobelow --skip --exit, dialyzer
 mix docs
-mix credo --strict
-mix dialyzer
 ```
+
+Sobelow runs with `--skip` so that `# sobelow_skip` comments in the source
+apply; each one states why.
 
 Known shortcuts and their upgrade paths are in [ISSUES.md](ISSUES.md).
 

@@ -5,7 +5,7 @@ defmodule Actuator.Transducers.Instances do
   """
 
   alias Actuator.Transducers
-  alias Actuator.Transducers.{Action, Transducer}
+  alias Actuator.Transducers.{Action, Telemetry, Transducer}
 
   @supervisor Actuator.Transducers.InstanceSupervisor
   @registry Actuator.Transducers.Registry
@@ -64,7 +64,7 @@ defmodule Actuator.Transducers.Instances do
     name_with_meta = {:via, Registry, {@registry, name, %{entry_place: t.entry_place}}}
 
     journal = fn event ->
-      Actuator.Transducers.Telemetry.journal(name, event)
+      Telemetry.journal(name, event)
       Phoenix.PubSub.broadcast(Actuator.PubSub, topic(name), {:transducer, name, event})
     end
 
@@ -86,6 +86,7 @@ defmodule Actuator.Transducers.Instances do
 
   @doc "Stops the instance. Returns once the registry no longer resolves the name."
   @spec stop(String.t()) :: :ok
+  # sobelow_skip ["DOS.ModuleConcat"]
   def stop(name) do
     case lookup(name) do
       nil ->

@@ -28,7 +28,12 @@ defmodule Actuator.Transducers.Action do
       ApiSpec.operation(spec, binding.operation_id) ||
         raise ArgumentError, "unknown operation #{binding.operation_id}"
 
-    in_var = with([arc | _] <- transition.in, do: arc.expr, else: (_ -> nil))
+    in_var =
+      case transition.in do
+        [arc | _] -> arc.expr
+        [] -> nil
+      end
+
     out_places = Enum.map(transition.out, & &1.place)
 
     fn _name, bound ->

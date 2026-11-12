@@ -162,17 +162,21 @@ defmodule ActuatorWeb.TransducerLive.Show do
   def handle_event("bind", %{"transition" => transition, "operation" => operation}, socket) do
     transducer = socket.assigns.transducer
 
-    with [spec_id, op_id] <- String.split(operation, "|", parts: 2),
-         spec when not is_nil(spec) <- ApiSpecs.get_api_spec!(spec_id),
-         {:ok, _} <- Transducers.bind(transducer, transition, spec, op_id) do
-      {:noreply,
-       socket
-       |> assign_bindings(transducer)
-       |> assign(:status, Instances.status(transducer.name))
-       |> put_flash(:info, "Bound #{transition}")}
-    else
-      {:error, %Ecto.Changeset{} = cs} ->
-        {:noreply, put_flash(socket, :error, "Could not bind: #{inspect(cs.errors)}")}
+    case String.split(operation, "|", parts: 2) do
+      [spec_id, op_id] ->
+        spec = ApiSpecs.get_api_spec!(spec_id)
+
+        case Transducers.bind(transducer, transition, spec, op_id) do
+          {:ok, _} ->
+            {:noreply,
+             socket
+             |> assign_bindings(transducer)
+             |> assign(:status, Instances.status(transducer.name))
+             |> put_flash(:info, "Bound #{transition}")}
+
+          {:error, %Ecto.Changeset{} = cs} ->
+            {:noreply, put_flash(socket, :error, "Could not bind: #{inspect(cs.errors)}")}
+        end
 
       _ ->
         {:noreply, put_flash(socket, :error, "Choose an operation")}

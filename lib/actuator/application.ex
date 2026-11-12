@@ -7,6 +7,8 @@ defmodule Actuator.Application do
 
   use Application
 
+  alias Actuator.Transducers.Instances
+
   @impl true
   def start(_type, _args) do
     children =
@@ -15,7 +17,7 @@ defmodule Actuator.Application do
         Actuator.Repo,
         {DNSCluster, query: Application.get_env(:actuator, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Actuator.PubSub}
-      ] ++ Actuator.Transducers.Instances.children() ++ [ActuatorWeb.Endpoint]
+      ] ++ Instances.children() ++ [ActuatorWeb.Endpoint]
 
     # See https://elixir.hexdocs.pm/Supervisor.html
     # for other strategies and supported options

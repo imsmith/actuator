@@ -54,6 +54,13 @@ cannot route on the response yet. Upgrade: `local` guards on downstream
 transitions already can read `$tok(status)`; a per-arc expression language in
 `cpn-spec 1.1` would let the transition itself choose.
 
+### CSP allows inline scripts
+
+The browser pipeline sends a Content-Security-Policy, but `script-src` includes
+`'unsafe-inline'` because the scaffold's root layout bootstraps the colour
+theme with an inline script before first paint. Upgrade: a per-request nonce
+via `put_secure_browser_headers` and `csp_nonce` on that one script.
+
 ## Open
 
 - Hierarchical nets, compensation, timed transitions are not in `cpn-spec 1.0`

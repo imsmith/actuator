@@ -2,8 +2,8 @@ defmodule Actuator.Transducers do
   @moduledoc "Transducer definitions: stored `cpn-spec` nets with an entry place."
 
   import Ecto.Query, warn: false
-  alias Actuator.Repo
   alias Actuator.ApiSpecs.ApiSpec
+  alias Actuator.Repo
   alias Actuator.Transducers.{Binding, Instances, Transducer}
 
   @doc "All definitions by name."
@@ -15,7 +15,7 @@ defmodule Actuator.Transducers do
   def list_enabled, do: Repo.all(from t in Transducer, where: t.enabled, order_by: t.name)
 
   @doc "Fetches by id; raises when missing."
-  @spec get_transducer!(integer) :: Transducer.t()
+  @spec get_transducer!(integer | String.t()) :: Transducer.t()
   def get_transducer!(id), do: Repo.get!(Transducer, id)
 
   @doc "Fetches by name, or `nil`."

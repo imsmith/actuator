@@ -10,7 +10,7 @@ defmodule Actuator.ApiSpecs do
   def list_api_specs, do: Repo.all(from s in ApiSpec, order_by: s.name)
 
   @doc "Fetches by id; raises when missing."
-  @spec get_api_spec!(integer) :: ApiSpec.t()
+  @spec get_api_spec!(integer | String.t()) :: ApiSpec.t()
   def get_api_spec!(id), do: Repo.get!(ApiSpec, id)
 
   @doc "Fetches by name, or `nil`."

@@ -62,7 +62,6 @@ defmodule Actuator.ApiSpecs.ApiSpec do
           {:ok, %{} = doc} -> {:ok, doc}
           {:ok, _} -> {:error, "document must be a mapping"}
           {:error, %{message: m}} -> {:error, "not JSON, and YAML failed: #{m}"}
-          {:error, other} -> {:error, "not JSON, and YAML failed: #{inspect(other)}"}
         end
     end
   end
