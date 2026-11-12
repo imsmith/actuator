@@ -13,6 +13,9 @@ config :actuator, Actuator.Repo,
 # Single admin bearer token for the listener API.
 config :actuator, api_token: "dev-token"
 
+# Outbound API calls are stubbed with Req.Test.
+config :actuator, req_options: [plug: {Req.Test, Actuator.Transducers.Action}]
+
 # Instances are started explicitly by tests, not from the table at boot.
 config :actuator, start_transducers: false
 

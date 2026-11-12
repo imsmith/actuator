@@ -2,6 +2,7 @@ defmodule ActuatorWeb.TransducerLiveTest do
   use ActuatorWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
+  import Actuator.ApiSpecsFixtures
   import Actuator.TransducersFixtures
 
   alias Actuator.Transducers.Instances
@@ -85,6 +86,23 @@ defmodule ActuatorWeb.TransducerLiveTest do
       # the journal event arrives over PubSub; render after it is processed
       assert render(view) =~ "fired handle"
       assert has_element?(view, "#place-done", "lamp-1")
+    end
+
+    test "binds and unbinds a transition", %{conn: conn, transducer: transducer} do
+      spec = api_spec_fixture(%{name: "lights"})
+      {:ok, view, _html} = live(conn, ~p"/admin/transducers/#{transducer}")
+      assert has_element?(view, "#bind-handle")
+
+      view
+      |> element("#bind-handle")
+      |> render_submit(%{"transition" => "handle", "operation" => "#{spec.id}|setState"})
+
+      assert has_element?(view, "#binding-handle", "lights:setState")
+      assert [%{transition: "handle"}] = Actuator.Transducers.list_bindings(transducer)
+
+      view |> element("#binding-handle a", "Unbind") |> render_click()
+      assert has_element?(view, "#bind-handle")
+      assert Actuator.Transducers.list_bindings(transducer) == []
     end
 
     test "rejects a non-object token", %{conn: conn, transducer: transducer} do

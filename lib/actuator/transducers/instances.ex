@@ -5,7 +5,7 @@ defmodule Actuator.Transducers.Instances do
   """
 
   alias Actuator.Transducers
-  alias Actuator.Transducers.Transducer
+  alias Actuator.Transducers.{Action, Transducer}
 
   @supervisor Actuator.Transducers.InstanceSupervisor
   @registry Actuator.Transducers.Registry
@@ -67,7 +67,14 @@ defmodule Actuator.Transducers.Instances do
       Phoenix.PubSub.broadcast(Actuator.PubSub, topic(name), {:transducer, name, event})
     end
 
-    spec = {ExCpn.Instance, net: Transducer.net(t), name: name_with_meta, journal: journal}
+    net = Transducer.net(t)
+
+    actions =
+      Map.new(Transducers.list_bindings(t), fn b ->
+        {b.transition, Action.build(b, ExCpn.Net.transition(net, b.transition))}
+      end)
+
+    spec = {ExCpn.Instance, net: net, name: name_with_meta, journal: journal, actions: actions}
 
     case DynamicSupervisor.start_child(@supervisor, spec) do
       {:ok, pid} -> {:ok, pid}

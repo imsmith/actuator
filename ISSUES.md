@@ -32,6 +32,28 @@ per-transducer tokens stored with the definition, then real principals.
 The place's YANG type is recorded but not enforced. Upgrade: validate the body
 against the YANG type via `ex_yang` before accepting.
 
+### API spec `auth_header` is stored in plaintext
+
+`Actuator.ApiSpecs.ApiSpec.auth_header` holds a live credential in the SQLite
+row, redacted from inspect but not encrypted. Prototype only. Upgrade: reference
+a secret through the credentials broker (`Comn.Secrets`) and resolve at call
+time.
+
+### Deleting an API spec silently drops its bindings
+
+`bindings.api_spec_id` is `on_delete: :delete_all`, and the affected
+transducers are not restarted, so their running instances keep the old action
+until the next sync. Upgrade: restrict the delete while bindings exist, or
+restart affected transducers.
+
+### Action response fan-out is uniform
+
+`Actuator.Transducers.Action` produces the same token (input merged with
+`status` and `response`) for every out place of the bound transition. The net
+cannot route on the response yet. Upgrade: `local` guards on downstream
+transitions already can read `$tok(status)`; a per-arc expression language in
+`cpn-spec 1.1` would let the transition itself choose.
+
 ## Open
 
 - Hierarchical nets, compensation, timed transitions are not in `cpn-spec 1.0`

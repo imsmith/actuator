@@ -3,7 +3,8 @@ defmodule Actuator.Transducers do
 
   import Ecto.Query, warn: false
   alias Actuator.Repo
-  alias Actuator.Transducers.{Instances, Transducer}
+  alias Actuator.ApiSpecs.ApiSpec
+  alias Actuator.Transducers.{Binding, Instances, Transducer}
 
   @spec list_transducers() :: [Transducer.t()]
   def list_transducers, do: Repo.all(from t in Transducer, order_by: t.name)
@@ -45,6 +46,35 @@ defmodule Actuator.Transducers do
   end
 
   defp synced(err), do: err
+
+  @doc "Bindings for a transducer with `api_spec` loaded, in transition order."
+  @spec list_bindings(Transducer.t()) :: [Binding.t()]
+  def list_bindings(%Transducer{id: id}) do
+    Repo.all(
+      from b in Binding, where: b.transducer_id == ^id, order_by: b.transition, preload: :api_spec
+    )
+  end
+
+  @doc "Binds a transition to an operation and restarts the instance so the action takes effect."
+  @spec bind(Transducer.t(), String.t(), ApiSpec.t(), String.t()) ::
+          {:ok, Binding.t()} | {:error, Ecto.Changeset.t()}
+  def bind(%Transducer{} = t, transition, %ApiSpec{} = spec, operation_id) do
+    attrs = %{transition: transition, operation_id: operation_id}
+
+    with {:ok, binding} <- %Binding{} |> Binding.changeset(attrs, t, spec) |> Repo.insert() do
+      :ok = Instances.sync(t)
+      {:ok, %{binding | api_spec: spec}}
+    end
+  end
+
+  @doc "Removes a binding and restarts the instance."
+  @spec unbind(Binding.t()) :: {:ok, Binding.t()} | {:error, Ecto.Changeset.t()}
+  def unbind(%Binding{} = binding) do
+    with {:ok, deleted} <- Repo.delete(binding) do
+      :ok = Instances.sync(get_transducer!(binding.transducer_id))
+      {:ok, deleted}
+    end
+  end
 
   @spec change_transducer(Transducer.t(), map) :: Ecto.Changeset.t()
   def change_transducer(%Transducer{} = t, attrs \\ %{}), do: Transducer.changeset(t, attrs)
