@@ -1,18 +1,18 @@
 # Actuator
 
-To start your Phoenix server:
+AS A generic TRANSDUCER, I can convert HTTPS requests into changes to an API endpoint that is provided by a third-party service or an "actuator-agent" that is installed on a machine, SO THAT I can control the behavior of the system remotely.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+A TRANSDUCER is defined as a runtime configuration using data models (rendered in YANG), action models (rendered as Colored Petri Nets), acceptance tests (rendered as gherkin features), and, optionally, c4like diagrams and anemos rules.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+When created, a TRANSDUCER has it's own listener, uri, and supervision tree.
 
-Ready to run in production? Please [check our deployment guides](https://phoenix.hexdocs.pm/deployment.html).
+Transducers connect LISTENERS to CLIENTS.
 
-## Learn more
 
-* Official website: https://www.phoenixframework.org/
-* Guides: https://phoenix.hexdocs.pm/overview.html
-* Docs: https://phoenix.hexdocs.pm
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+As a CLIENT I make requests and recieve responses to an API.   
+
+AN API is defined at runtime by an OpenAPIv3 specification.
+
+
+The transducer can compose multiple API calls together to create a single action input.  When it does this, it is responsible for the appearance and outcome of ATOMICITY.
+
