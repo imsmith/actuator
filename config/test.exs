@@ -10,6 +10,9 @@ config :actuator, Actuator.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 5
 
+# Instances are started explicitly by tests, not from the table at boot.
+config :actuator, start_transducers: false
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :actuator, ActuatorWeb.Endpoint,
