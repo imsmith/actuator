@@ -14,20 +14,20 @@ defmodule ActuatorWeb.ListenerDocLive do
         <:subtitle>
           Every enabled transducer is a <code>POST</code>
           endpoint. The machine-readable form is
-          <a id="openapi-link" href={~p"/t/openapi.json"} class="link font-mono">/t/openapi.json</a>
+          <a id="openapi-link" href={~p"/t/openapi.json"} class="font-mono underline">/t/openapi.json</a>
           (bearer token required).
         </:subtitle>
       </.header>
 
-      <p :if={@transducers == []} class="text-sm opacity-70">No enabled transducers yet.</p>
+      <p :if={@transducers == []} class="text-sm text-zinc-500">No enabled transducers yet.</p>
 
       <section :for={t <- @transducers} id={"doc-#{t.name}"} class="space-y-2">
         <h2 class="font-mono text-base">POST /t/{t.name}</h2>
-        <p class="text-sm opacity-70">
+        <p class="text-sm text-zinc-500">
           Body becomes one token on <code>{t.entry_place}</code>. Reply is <code>202</code>
           with the place name.
         </p>
-        <pre class="text-xs bg-base-200 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= ListenerSpec.curl(t, @base_url) %></pre>
+        <pre class="text-xs bg-zinc-100 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= ListenerSpec.curl(t, @base_url) %></pre>
       </section>
     </Layouts.app>
     """

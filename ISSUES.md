@@ -61,6 +61,16 @@ The browser pipeline sends a Content-Security-Policy, but `script-src` includes
 theme with an inline script before first paint. Upgrade: a per-request nonce
 via `put_secure_browser_headers` and `csp_nonce` on that one script.
 
+### `core_components.ex` still uses daisyUI
+
+The project rule is hand-written Tailwind, no daisyUI. The admin chrome and
+the transducer, API spec, and listener pages use plain Tailwind now, but the
+scaffold's `core_components.ex` (`<.button>`, `<.input>`, `<.table>`,
+`<.header>`, flash) still carries daisyUI classes, so the plugin stays in
+`app.css`. Upgrade: rewrite those components in Tailwind and drop the plugin
+and the `daisyui` dep. `priv/static`'s Phoenix logo and the unused
+`page_html/home.html.heex` go with it.
+
 ## Open
 
 - Hierarchical nets, compensation, timed transitions are not in `cpn-spec 1.0`

@@ -61,13 +61,16 @@ defmodule ActuatorWeb.TransducerLive.Index do
 
   defp status_badge(assigns) do
     ~H"""
-    <span class={[
-      "badge badge-sm",
-      @state == :quiescent && "badge-success",
-      @state == :busy && "badge-warning",
-      @state == :running && "badge-info",
-      @state == nil && "badge-ghost"
-    ]}>
+    <span
+      data-role="status"
+      class={[
+        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+        @state == :quiescent && "bg-emerald-100 text-emerald-800",
+        @state == :busy && "bg-amber-100 text-amber-800",
+        @state == :running && "bg-sky-100 text-sky-800",
+        @state == nil && "bg-zinc-100 text-zinc-500"
+      ]}
+    >
       {@state || "stopped"}
     </span>
     """

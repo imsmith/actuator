@@ -24,7 +24,7 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
           type="textarea"
           label="Source"
           rows="18"
-          class="textarea font-mono text-sm w-full"
+          class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm"
         />
         <.input field={@form[:base_url]} type="text" label="Base URL" placeholder="from spec servers" />
         <.input

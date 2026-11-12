@@ -28,7 +28,7 @@ defmodule ActuatorWeb.TransducerLiveTest do
     test "lists transducers with status", %{conn: conn, transducer: transducer} do
       {:ok, view, _html} = live(conn, ~p"/admin/transducers")
       assert has_element?(view, "#transducers-#{transducer.id}", transducer.name)
-      assert has_element?(view, "#transducers-#{transducer.id} .badge", "quiescent")
+      assert has_element?(view, "#transducers-#{transducer.id} [data-role=status]", "quiescent")
     end
 
     test "saves a new transducer and starts it", %{conn: conn} do
@@ -81,7 +81,7 @@ defmodule ActuatorWeb.TransducerLiveTest do
       assert has_element?(view, "#place-inbox")
       assert has_element?(view, "svg#net-diagram #net-diagram-place-inbox")
       assert has_element?(view, "svg#net-diagram #net-diagram-transition-handle")
-      assert has_element?(view, "#marking .badge", "quiescent")
+      assert has_element?(view, "#marking [data-role=status]", "quiescent")
 
       view |> form("#inject-form", inject: %{json: ~s({"device":"lamp-1"})}) |> render_submit()
       ExCpn.Instance.await_quiescent(Instances.via(transducer.name))

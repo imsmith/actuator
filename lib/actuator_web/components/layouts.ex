@@ -35,38 +35,41 @@ defmodule ActuatorWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <.link navigate={~p"/admin/transducers"} class="btn btn-ghost">Transducers</.link>
-          </li>
-          <li>
-            <.link navigate={~p"/admin/api_specs"} class="btn btn-ghost">API specs</.link>
-          </li>
-          <li>
-            <.link navigate={~p"/admin/listener"} class="btn btn-ghost">Listener API</.link>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-        </ul>
+    <header class="border-b border-zinc-200 bg-white">
+      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+        <.link navigate={~p"/admin/transducers"} class="flex items-center gap-2 text-zinc-900">
+          <span class="inline-block h-3 w-3 rounded-full bg-emerald-500" aria-hidden="true"></span>
+          <span class="text-sm font-semibold tracking-wide">Actuator</span>
+        </.link>
+        <nav class="flex items-center gap-1 text-sm">
+          <.nav_link navigate={~p"/admin/transducers"}>Transducers</.nav_link>
+          <.nav_link navigate={~p"/admin/api_specs"}>API specs</.nav_link>
+          <.nav_link navigate={~p"/admin/listener"}>Listener API</.nav_link>
+        </nav>
       </div>
     </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <main class="px-4 py-10 sm:px-6">
+      <div class="mx-auto max-w-5xl space-y-8">
         {render_slot(@inner_block)}
       </div>
     </main>
 
     <.flash_group flash={@flash} />
+    """
+  end
+
+  attr :navigate, :string, required: true
+  slot :inner_block, required: true
+
+  defp nav_link(assigns) do
+    ~H"""
+    <.link
+      navigate={@navigate}
+      class="rounded-md px-3 py-1.5 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+    >
+      {render_slot(@inner_block)}
+    </.link>
     """
   end
 

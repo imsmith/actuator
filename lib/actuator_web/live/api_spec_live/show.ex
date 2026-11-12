@@ -25,8 +25,8 @@ defmodule ActuatorWeb.ApiSpecLive.Show do
       </.header>
 
       <section id="operations" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Operations</h2>
-        <table class="table table-sm">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Operations</h2>
+        <table class="w-full text-sm [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-zinc-500 [&_td]:py-2 [&_td]:align-top [&_thead]:border-b [&_thead]:border-zinc-200 [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-zinc-100">
           <thead>
             <tr>
               <th>Operation</th>
@@ -47,8 +47,8 @@ defmodule ActuatorWeb.ApiSpecLive.Show do
       </section>
 
       <section id="source" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Source</h2>
-        <pre class="text-xs bg-base-200 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @api_spec.source %></pre>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Source</h2>
+        <pre class="text-xs bg-zinc-100 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @api_spec.source %></pre>
       </section>
     </Layouts.app>
     """

@@ -32,7 +32,7 @@ defmodule ActuatorWeb.TransducerLive.Show do
       </.header>
 
       <section id="diagram" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Net</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Net</h2>
         <.net
           id="net-diagram"
           net={@net}
@@ -40,17 +40,29 @@ defmodule ActuatorWeb.TransducerLive.Show do
           enabled={enabled_names(@net, @status)}
           bindings={Map.new(@bindings, fn {t, b} -> {t, "#{b.api_spec.name}:#{b.operation_id}"} end)}
         />
-        <p class="text-xs opacity-60">
+        <p class="text-xs text-zinc-500">
           Amber places hold tokens. Green transitions are enabled now; blue ones are bound to an operation.
         </p>
       </section>
 
       <section id="marking" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">
-          Marking <span :if={@status} class="badge badge-sm ml-2">{@status.state}</span>
-          <span :if={!@status} class="badge badge-sm badge-ghost ml-2">stopped</span>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          Marking
+          <span
+            :if={@status}
+            data-role="status"
+            class="ml-2 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800"
+          >{@status.state}</span>
+          <span
+            :if={!@status}
+            data-role="status"
+            class="ml-2 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500"
+          >stopped</span>
         </h2>
-        <table :if={@status} class="table table-sm">
+        <table
+          :if={@status}
+          class="w-full text-sm [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-zinc-500 [&_td]:py-2 [&_td]:align-top [&_thead]:border-b [&_thead]:border-zinc-200 [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-zinc-100"
+        >
           <thead>
             <tr>
               <th>Place</th>
@@ -61,45 +73,45 @@ defmodule ActuatorWeb.TransducerLive.Show do
             <tr :for={{place, tokens} <- Enum.sort(@status.marking)} id={"place-#{place}"}>
               <td class="font-mono">{place}</td>
               <td class="font-mono text-xs">
-                <span :if={tokens == []} class="opacity-40">—</span>
+                <span :if={tokens == []} class="text-zinc-300">—</span>
                 <div :for={token <- tokens}>{Jason.encode!(token)}</div>
               </td>
             </tr>
           </tbody>
         </table>
-        <p :if={!@status} class="text-sm opacity-70">
+        <p :if={!@status} class="text-sm text-zinc-500">
           Not running. Enable the transducer to start it.
         </p>
       </section>
 
       <section id="events" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Recent events</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Recent events</h2>
         <ul id="event-list" phx-update="stream" class="font-mono text-xs space-y-1">
-          <li :for={{id, ev} <- @streams.events} id={id} class={ev.kind == :failed && "text-error"}>
+          <li :for={{id, ev} <- @streams.events} id={id} class={ev.kind == :failed && "text-red-600"}>
             {ev.text}
           </li>
         </ul>
       </section>
 
       <section :if={@status} id="inject" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Inject a token</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Inject a token</h2>
         <.form for={@inject} id="inject-form" phx-submit="inject" class="flex gap-2 items-start">
           <.input
             field={@inject[:json]}
             type="text"
             placeholder={~s({"device": "lamp-1"})}
-            class="input font-mono text-sm w-full"
+            class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm"
           />
           <.button variant="primary">Put on {@transducer.entry_place}</.button>
         </.form>
       </section>
 
       <section id="bindings" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Bindings</h2>
-        <p class="text-sm opacity-70">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Bindings</h2>
+        <p class="text-sm text-zinc-500">
           A bound transition performs an API operation when it fires. Unbound transitions move tokens as written.
         </p>
-        <table class="table table-sm">
+        <table class="w-full text-sm [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-zinc-500 [&_td]:py-2 [&_td]:align-top [&_thead]:border-b [&_thead]:border-zinc-200 [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-zinc-100">
           <thead>
             <tr>
               <th>Transition</th>
@@ -119,13 +131,17 @@ defmodule ActuatorWeb.TransducerLive.Show do
                 <td colspan="2">
                   <form id={"bind-#{t.name}"} phx-submit="bind" class="flex gap-2 items-center">
                     <input type="hidden" name="transition" value={t.name} />
-                    <select name="operation" class="select select-sm font-mono text-xs" required>
+                    <select
+                      name="operation"
+                      class="rounded-md border border-zinc-300 bg-white px-2 py-1 font-mono text-xs"
+                      required
+                    >
                       <option value="">choose an operation</option>
                       <option :for={{label, value} <- @operation_options} value={value}>
                         {label}
                       </option>
                     </select>
-                    <.button class="btn btn-sm">Bind</.button>
+                    <button class="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-100">Bind</button>
                   </form>
                 </td>
               <% end %>
@@ -135,8 +151,8 @@ defmodule ActuatorWeb.TransducerLive.Show do
       </section>
 
       <section id="source" class="space-y-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Source</h2>
-        <pre class="text-xs bg-base-200 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @transducer.source %></pre>
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Source</h2>
+        <pre class="text-xs bg-zinc-100 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @transducer.source %></pre>
       </section>
     </Layouts.app>
     """
