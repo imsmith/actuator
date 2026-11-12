@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.Endpoint do
+  @moduledoc "Phoenix endpoint. Bandit serves the listener API under `/t` and the admin UI under `/admin`."
   use Phoenix.Endpoint, otp_app: :actuator
 
   # The session will be stored in the cookie and signed,

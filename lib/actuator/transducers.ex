@@ -6,15 +6,19 @@ defmodule Actuator.Transducers do
   alias Actuator.ApiSpecs.ApiSpec
   alias Actuator.Transducers.{Binding, Instances, Transducer}
 
+  @doc "All definitions by name."
   @spec list_transducers() :: [Transducer.t()]
   def list_transducers, do: Repo.all(from t in Transducer, order_by: t.name)
 
+  @doc "Definitions that should be running."
   @spec list_enabled() :: [Transducer.t()]
   def list_enabled, do: Repo.all(from t in Transducer, where: t.enabled, order_by: t.name)
 
+  @doc "Fetches by id; raises when missing."
   @spec get_transducer!(integer) :: Transducer.t()
   def get_transducer!(id), do: Repo.get!(Transducer, id)
 
+  @doc "Fetches by name, or `nil`."
   @spec get_by_name(String.t()) :: Transducer.t() | nil
   def get_by_name(name), do: Repo.get_by(Transducer, name: name)
 
@@ -76,6 +80,7 @@ defmodule Actuator.Transducers do
     end
   end
 
+  @doc "Changeset for forms."
   @spec change_transducer(Transducer.t(), map) :: Ecto.Changeset.t()
   def change_transducer(%Transducer{} = t, attrs \\ %{}), do: Transducer.changeset(t, attrs)
 end

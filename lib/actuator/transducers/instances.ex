@@ -40,6 +40,7 @@ defmodule Actuator.Transducers.Instances do
   @spec via(String.t()) :: {:via, Registry, {module, String.t()}}
   def via(name), do: {:via, Registry, {@registry, name}}
 
+  @doc "Pid of a running instance, or `nil`."
   @spec lookup(String.t()) :: pid | nil
   def lookup(name) do
     case lookup_meta(name) do

@@ -1,4 +1,11 @@
 defmodule ActuatorWeb.Router do
+  @moduledoc """
+  Routes.
+
+    * `/t/:name` (POST) and `/t/openapi.json` (GET): the listener API, bearer token
+    * `/admin/*`: the admin UI, HTTP basic auth with user `admin` and the same token
+    * `/dev/dashboard`: LiveDashboard in dev
+  """
   use ActuatorWeb, :router
 
   pipeline :browser do

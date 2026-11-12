@@ -38,7 +38,16 @@ defmodule Actuator.ApiSpecs.ApiSpec do
     |> unique_constraint(:name)
   end
 
-  @doc "Decodes the stored source. JSON first, then YAML."
+  @doc """
+  Decodes the stored source. JSON first, then YAML.
+
+      iex> ApiSpec.decode(~s({"openapi": "3.0.0", "paths": {}}))
+      {:ok, %{"openapi" => "3.0.0", "paths" => %{}}}
+      iex> ApiSpec.decode("openapi: 3.0.0\\npaths: {}\\n")
+      {:ok, %{"openapi" => "3.0.0", "paths" => %{}}}
+      iex> ApiSpec.decode("[1]")
+      {:error, "document must be an object"}
+  """
   @spec decode(String.t()) :: {:ok, map} | {:error, String.t()}
   def decode(source) do
     case Jason.decode(source) do
@@ -65,7 +74,17 @@ defmodule Actuator.ApiSpecs.ApiSpec do
     doc
   end
 
-  @doc "Operations in path order. `id` is `operationId` or `METHOD path` when absent."
+  @doc """
+  Operations in path order. `id` is `operationId` or `METHOD path` when absent.
+
+      iex> ApiSpec.operations(%{"paths" => %{"/ping" => %{"post" => %{"operationId" => "ping", "summary" => "Ping"}, "get" => %{}}}})
+      [
+        %{id: "GET /ping", method: "get", path: "/ping", summary: ""},
+        %{id: "ping", method: "post", path: "/ping", summary: "Ping"}
+      ]
+      iex> ApiSpec.operations(%{})
+      []
+  """
   @spec operations(t | map) :: [operation]
   def operations(%__MODULE__{} = spec), do: spec |> document() |> operations()
 
@@ -86,6 +105,7 @@ defmodule Actuator.ApiSpecs.ApiSpec do
 
   def operations(_), do: []
 
+  @doc "One operation by id, or `nil`."
   @spec operation(t, String.t()) :: operation | nil
   def operation(%__MODULE__{} = spec, id), do: spec |> operations() |> Enum.find(&(&1.id == id))
 

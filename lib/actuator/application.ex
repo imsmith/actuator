@@ -1,7 +1,9 @@
 defmodule Actuator.Application do
-  # See https://elixir.hexdocs.pm/Application.html
-  # for more information on OTP Applications
-  @moduledoc false
+  @moduledoc """
+  OTP application. Children, in order: telemetry, repo, DNS cluster, PubSub,
+  the transducer registry and dynamic supervisor, the boot task that starts
+  every enabled transducer, and the endpoint.
+  """
 
   use Application
 

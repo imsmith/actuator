@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.ApiSpecLive.Form do
+  @moduledoc "Admin create/edit form for an OpenAPI 3 document."
   use ActuatorWeb, :live_view
 
   alias Actuator.ApiSpecs

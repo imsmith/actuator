@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.TransducerLive.Form do
+  @moduledoc "Admin create/edit form. The net is validated on every change."
   use ActuatorWeb, :live_view
 
   alias Actuator.Transducers

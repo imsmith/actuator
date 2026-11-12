@@ -12,7 +12,8 @@ defmodule Actuator.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      docs: docs()
     ]
   end
 
@@ -81,7 +82,58 @@ defmodule Actuator.MixProject do
       {:vet_cli, path: Path.expand("~/github/vet/apps/vet_cli"), only: :dev, runtime: false},
       {:sobelow, "~> 0.18", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md", "ISSUES.md"],
+      groups_for_modules: [
+        Transducers: [
+          Actuator.Transducers,
+          Actuator.Transducers.Transducer,
+          Actuator.Transducers.Binding,
+          Actuator.Transducers.Instances,
+          Actuator.Transducers.Action,
+          Actuator.Transducers.ListenerSpec,
+          Actuator.Transducers.Telemetry
+        ],
+        "API specs": [Actuator.ApiSpecs, Actuator.ApiSpecs.ApiSpec],
+        "Web: listener": [
+          ActuatorWeb.TransducerController,
+          ActuatorWeb.ListenerSpecController,
+          ActuatorWeb.Plugs.ApiAuth
+        ],
+        "Web: admin": [
+          ActuatorWeb.TransducerLive.Index,
+          ActuatorWeb.TransducerLive.Show,
+          ActuatorWeb.TransducerLive.Form,
+          ActuatorWeb.ApiSpecLive.Index,
+          ActuatorWeb.ApiSpecLive.Show,
+          ActuatorWeb.ApiSpecLive.Form,
+          ActuatorWeb.ListenerDocLive
+        ],
+        Infrastructure: [
+          Actuator,
+          Actuator.Application,
+          Actuator.Repo,
+          Actuator.Mailer,
+          ActuatorWeb,
+          ActuatorWeb.Endpoint,
+          ActuatorWeb.Router,
+          ActuatorWeb.Telemetry,
+          ActuatorWeb.Gettext,
+          ActuatorWeb.Layouts,
+          ActuatorWeb.CoreComponents,
+          ActuatorWeb.PageController,
+          ActuatorWeb.PageHTML,
+          ActuatorWeb.ErrorHTML,
+          ActuatorWeb.ErrorJSON
+        ]
+      ]
     ]
   end
 

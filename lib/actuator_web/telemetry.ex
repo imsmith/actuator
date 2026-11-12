@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.Telemetry do
+  @moduledoc "Telemetry supervisor and LiveDashboard metrics, including the transducer and listener counters."
   use Supervisor
   import Telemetry.Metrics
 

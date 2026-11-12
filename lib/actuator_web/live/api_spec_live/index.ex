@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.ApiSpecLive.Index do
+  @moduledoc "Admin list of API specs with operation counts."
   use ActuatorWeb, :live_view
 
   alias Actuator.ApiSpecs

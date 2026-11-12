@@ -9,7 +9,16 @@ defmodule Actuator.Transducers.ListenerSpec do
 
   alias Actuator.Transducers.Transducer
 
-  @doc "Builds the document for the given transducers, served under `base_url`."
+  @doc """
+  Builds the document for the given transducers, served under `base_url`.
+
+      iex> source = "cpn-spec 1.0\\nplace inbox -type home:request\\n"
+      iex> doc = ListenerSpec.document([%Transducer{name: "lights", source: source, entry_place: "inbox"}], "https://a.example")
+      iex> Map.keys(doc["paths"])
+      ["/t/lights"]
+      iex> get_in(doc, ["paths", "/t/lights", "post", "requestBody", "content", "application/json", "schema", "title"])
+      "home:request"
+  """
   @spec document([Transducer.t()], String.t()) :: map
   def document(transducers, base_url) do
     %{
@@ -37,7 +46,13 @@ defmodule Actuator.Transducers.ListenerSpec do
     }
   end
 
-  @doc "A curl example for one transducer."
+  @doc """
+  A curl example for one transducer.
+
+      iex> ListenerSpec.curl(%Transducer{name: "lights"}, "https://actuator.example")
+      ...> |> String.starts_with?("curl -X POST https://actuator.example/t/lights")
+      true
+  """
   @spec curl(Transducer.t(), String.t()) :: String.t()
   def curl(%Transducer{name: name}, base_url) do
     ~s|curl -X POST #{base_url}/t/#{name} \\\n  -H "Authorization: Bearer $ACTUATOR_API_TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d '{"example": "value"}'|

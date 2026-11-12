@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.ApiSpecLive.Show do
+  @moduledoc "Admin view of one API spec: its operations and source."
   use ActuatorWeb, :live_view
 
   alias Actuator.ApiSpecs

@@ -1,4 +1,8 @@
 defmodule ActuatorWeb.TransducerLive.Show do
+  @moduledoc """
+  Admin view of one transducer: live marking, journal events over PubSub, token
+  injection, transition bindings, and the source.
+  """
   use ActuatorWeb, :live_view
 
   alias Actuator.{ApiSpecs, Transducers}

@@ -1,9 +1,11 @@
 defmodule Actuator do
   @moduledoc """
-  Actuator keeps the contexts that define your domain
-  and business logic.
+  Actuator turns HTTPS requests into changes on third-party APIs, driven by
+  Coloured Petri Net action models.
 
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
+  Contexts:
+
+    * `Actuator.Transducers` - definitions, running instances, bindings
+    * `Actuator.ApiSpecs` - stored OpenAPI 3 documents the actions call
   """
 end

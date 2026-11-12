@@ -27,6 +27,7 @@ defmodule Actuator.Transducers.Telemetry do
     })
   end
 
+  @doc "Emits a listener outcome. Metadata carries `:transducer` plus `:place` or `:reason`."
   @spec listener(:accepted | :rejected, map) :: :ok
   def listener(outcome, metadata) when outcome in [:accepted, :rejected] do
     :telemetry.execute([:actuator, :listener, outcome], %{count: 1}, metadata)

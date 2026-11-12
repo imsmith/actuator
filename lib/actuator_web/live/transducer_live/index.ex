@@ -1,4 +1,5 @@
 defmodule ActuatorWeb.TransducerLive.Index do
+  @moduledoc "Admin list of transducers with each instance's live state."
   use ActuatorWeb, :live_view
 
   alias Actuator.Transducers
