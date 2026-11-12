@@ -1,0 +1,96 @@
+defmodule ActuatorWeb.TransducerLiveTest do
+  use ActuatorWeb.ConnCase, async: true
+
+  import Phoenix.LiveViewTest
+  import Actuator.TransducersFixtures
+
+  alias Actuator.Transducers.Instances
+
+  @create_attrs %{enabled: true, name: "new-one", source: valid_source(), entry_place: "inbox"}
+  @update_attrs %{enabled: false, entry_place: "done"}
+  @invalid_attrs %{name: "Bad Name", source: "cpn-spec 1.0\nplace a\n", entry_place: "a"}
+
+  setup %{conn: conn} do
+    transducer = transducer_fixture()
+    on_exit(fn -> Instances.stop(transducer.name) end)
+    on_exit(fn -> Instances.stop("new-one") end)
+    auth = "Basic " <> Base.encode64("admin:dev-token")
+    %{conn: put_req_header(conn, "authorization", auth), transducer: transducer}
+  end
+
+  test "admin pages need basic auth", %{transducer: transducer} do
+    conn = get(build_conn(), ~p"/admin/transducers/#{transducer}")
+    assert conn.status == 401
+  end
+
+  describe "Index" do
+    test "lists transducers with status", %{conn: conn, transducer: transducer} do
+      {:ok, view, _html} = live(conn, ~p"/admin/transducers")
+      assert has_element?(view, "#transducers-#{transducer.id}", transducer.name)
+      assert has_element?(view, "#transducers-#{transducer.id} .badge", "quiescent")
+    end
+
+    test "saves a new transducer and starts it", %{conn: conn} do
+      {:ok, index_live, _html} = live(conn, ~p"/admin/transducers")
+
+      {:ok, form_live, _} =
+        index_live |> element("a", "New Transducer") |> render_click() |> follow_redirect(conn)
+
+      html = form_live |> form("#transducer-form", transducer: @invalid_attrs) |> render_change()
+      assert html =~ "line 2: place &#39;a&#39; missing -type"
+      assert html =~ "must be lowercase"
+
+      {:ok, _show, html} =
+        form_live
+        |> form("#transducer-form", transducer: @create_attrs)
+        |> render_submit()
+        |> follow_redirect(conn)
+
+      assert html =~ "Transducer created successfully"
+      assert Instances.lookup("new-one")
+    end
+
+    test "updates and deletes", %{conn: conn, transducer: transducer} do
+      {:ok, index_live, _html} = live(conn, ~p"/admin/transducers")
+
+      {:ok, form_live, _} =
+        index_live
+        |> element("#transducers-#{transducer.id} a", "Edit")
+        |> render_click()
+        |> follow_redirect(conn)
+
+      {:ok, _, html} =
+        form_live
+        |> form("#transducer-form", transducer: @update_attrs)
+        |> render_submit()
+        |> follow_redirect(conn)
+
+      assert html =~ "Transducer updated successfully"
+      assert Instances.lookup(transducer.name) == nil
+
+      {:ok, index_live, _html} = live(conn, ~p"/admin/transducers")
+      assert index_live |> element("#transducers-#{transducer.id} a", "Delete") |> render_click()
+      refute has_element?(index_live, "#transducers-#{transducer.id}")
+    end
+  end
+
+  describe "Show" do
+    test "shows the live marking and reacts to tokens", %{conn: conn, transducer: transducer} do
+      {:ok, view, _html} = live(conn, ~p"/admin/transducers/#{transducer}")
+      assert has_element?(view, "#place-inbox")
+      assert has_element?(view, "#marking .badge", "quiescent")
+
+      view |> form("#inject-form", inject: %{json: ~s({"device":"lamp-1"})}) |> render_submit()
+      ExCpn.Instance.await_quiescent(Instances.via(transducer.name))
+      # the journal event arrives over PubSub; render after it is processed
+      assert render(view) =~ "fired handle"
+      assert has_element?(view, "#place-done", "lamp-1")
+    end
+
+    test "rejects a non-object token", %{conn: conn, transducer: transducer} do
+      {:ok, view, _html} = live(conn, ~p"/admin/transducers/#{transducer}")
+      html = view |> form("#inject-form", inject: %{json: "[1,2]"}) |> render_submit()
+      assert html =~ "Token must be a JSON object"
+    end
+  end
+end

@@ -10,6 +10,26 @@ defmodule ActuatorWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :admin do
+    plug :admin_auth
+  end
+
+  defp admin_auth(conn, _opts) do
+    Plug.BasicAuth.basic_auth(conn,
+      username: "admin",
+      password: Application.fetch_env!(:actuator, :api_token)
+    )
+  end
+
+  scope "/admin", ActuatorWeb do
+    pipe_through [:browser, :admin]
+
+    live "/transducers", TransducerLive.Index, :index
+    live "/transducers/new", TransducerLive.Form, :new
+    live "/transducers/:id", TransducerLive.Show, :show
+    live "/transducers/:id/edit", TransducerLive.Form, :edit
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
     plug ActuatorWeb.Plugs.ApiAuth

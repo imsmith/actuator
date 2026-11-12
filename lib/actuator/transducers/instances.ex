@@ -23,6 +23,19 @@ defmodule Actuator.Transducers.Instances do
   @typedoc "What the registry holds alongside the pid."
   @type meta :: %{entry_place: String.t()}
 
+  @doc "PubSub topic carrying `{:transducer, name, ExCpn.Instance.event()}` for a transducer."
+  @spec topic(String.t()) :: String.t()
+  def topic(name), do: "transducer:" <> name
+
+  @doc "Current lifecycle state and marking, or `nil` when not running."
+  @spec status(String.t()) :: %{state: atom, marking: ExCpn.Marking.marking()} | nil
+  def status(name) do
+    case lookup(name) do
+      nil -> nil
+      pid -> %{state: ExCpn.Instance.state(pid), marking: ExCpn.Instance.marking(pid)}
+    end
+  end
+
   @doc "`:via` name for a transducer's instance."
   @spec via(String.t()) :: {:via, Registry, {module, String.t()}}
   def via(name), do: {:via, Registry, {@registry, name}}
@@ -48,7 +61,12 @@ defmodule Actuator.Transducers.Instances do
   @spec start(Transducer.t()) :: {:ok, pid} | {:error, term}
   def start(%Transducer{name: name} = t) do
     name_with_meta = {:via, Registry, {@registry, name, %{entry_place: t.entry_place}}}
-    spec = {ExCpn.Instance, net: Transducer.net(t), name: name_with_meta}
+
+    journal = fn event ->
+      Phoenix.PubSub.broadcast(Actuator.PubSub, topic(name), {:transducer, name, event})
+    end
+
+    spec = {ExCpn.Instance, net: Transducer.net(t), name: name_with_meta, journal: journal}
 
     case DynamicSupervisor.start_child(@supervisor, spec) do
       {:ok, pid} -> {:ok, pid}
