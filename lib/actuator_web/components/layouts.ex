@@ -51,6 +51,9 @@ defmodule ActuatorWeb.Layouts do
             <.link navigate={~p"/admin/api_specs"} class="btn btn-ghost">API specs</.link>
           </li>
           <li>
+            <.link navigate={~p"/admin/listener"} class="btn btn-ghost">Listener API</.link>
+          </li>
+          <li>
             <.theme_toggle />
           </li>
         </ul>

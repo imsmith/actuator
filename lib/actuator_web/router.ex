@@ -33,6 +33,8 @@ defmodule ActuatorWeb.Router do
     live "/api_specs/new", ApiSpecLive.Form, :new
     live "/api_specs/:id", ApiSpecLive.Show, :show
     live "/api_specs/:id/edit", ApiSpecLive.Form, :edit
+
+    live "/listener", ListenerDocLive, :index
   end
 
   pipeline :api do
@@ -43,6 +45,7 @@ defmodule ActuatorWeb.Router do
   scope "/t", ActuatorWeb do
     pipe_through :api
 
+    get "/openapi.json", ListenerSpecController, :show
     post "/:name", TransducerController, :actuate
   end
 
