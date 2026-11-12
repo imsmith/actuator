@@ -79,6 +79,8 @@ defmodule ActuatorWeb.TransducerLiveTest do
     test "shows the live marking and reacts to tokens", %{conn: conn, transducer: transducer} do
       {:ok, view, _html} = live(conn, ~p"/admin/transducers/#{transducer}")
       assert has_element?(view, "#place-inbox")
+      assert has_element?(view, "svg#net-diagram #net-diagram-place-inbox")
+      assert has_element?(view, "svg#net-diagram #net-diagram-transition-handle")
       assert has_element?(view, "#marking .badge", "quiescent")
 
       view |> form("#inject-form", inject: %{json: ~s({"device":"lamp-1"})}) |> render_submit()

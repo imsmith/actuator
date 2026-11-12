@@ -31,6 +31,20 @@ defmodule ActuatorWeb.TransducerLive.Show do
         </:actions>
       </.header>
 
+      <section id="diagram" class="space-y-2">
+        <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">Net</h2>
+        <.net
+          id="net-diagram"
+          net={@net}
+          marking={(@status && @status.marking) || %{}}
+          enabled={enabled_names(@net, @status)}
+          bindings={Map.new(@bindings, fn {t, b} -> {t, "#{b.api_spec.name}:#{b.operation_id}"} end)}
+        />
+        <p class="text-xs opacity-60">
+          Amber places hold tokens. Green transitions are enabled now; blue ones are bound to an operation.
+        </p>
+      </section>
+
       <section id="marking" class="space-y-2">
         <h2 class="text-sm font-semibold uppercase tracking-wide opacity-70">
           Marking <span :if={@status} class="badge badge-sm ml-2">{@status.state}</span>
@@ -141,9 +155,16 @@ defmodule ActuatorWeb.TransducerLive.Show do
      |> assign(:transducer, transducer)
      |> assign(:status, Instances.status(transducer.name))
      |> assign(:inject, to_form(%{"json" => ""}, as: :inject))
+     |> assign(:net, Transducers.Transducer.net(transducer))
      |> assign(:transitions, Transducers.Transducer.net(transducer).transitions)
      |> assign_bindings(transducer)
      |> stream(:events, [])}
+  end
+
+  defp enabled_names(_net, nil), do: []
+
+  defp enabled_names(net, %{marking: marking}) do
+    for {t, _} <- ExCpn.Marking.enabled(net, marking), do: t.name
   end
 
   defp assign_bindings(socket, transducer) do

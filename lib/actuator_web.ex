@@ -86,6 +86,7 @@ defmodule ActuatorWeb do
       import Phoenix.HTML
       # Core UI components
       import ActuatorWeb.CoreComponents
+      import ActuatorWeb.NetDiagram
 
       # Common modules used in templates
       alias ActuatorWeb.Layouts
