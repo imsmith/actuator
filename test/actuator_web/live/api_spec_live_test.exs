@@ -36,6 +36,17 @@ defmodule ActuatorWeb.ApiSpecLiveTest do
     assert html =~ "API spec created successfully"
   end
 
+  test "uploading a file fills source", %{conn: conn} do
+    {:ok, form_live, _html} = live(conn, ~p"/admin/api_specs/new")
+
+    form_live
+    |> file_input("#api_spec-form", :file, [%{name: "ping.json", content: valid_json()}])
+    |> render_upload("ping.json")
+
+    assert has_element?(form_live, "#api_spec_source", "ping")
+    assert has_element?(form_live, "#api_spec_name[value=ping]")
+  end
+
   test "show lists operations", %{conn: conn, api_spec: spec} do
     {:ok, view, _} = live(conn, ~p"/admin/api_specs/#{spec}")
     assert has_element?(view, "#op-setState", "put")

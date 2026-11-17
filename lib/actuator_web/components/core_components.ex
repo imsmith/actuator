@@ -314,6 +314,46 @@ defmodule ActuatorWeb.CoreComponents do
   end
 
   @doc """
+  A drop zone for one text file. The file is uploaded as soon as it is chosen
+  or dropped; the owning LiveView reads it in its `:progress` callback.
+
+  ```heex
+  <.file_drop upload={@uploads.file} />
+  ```
+  """
+  attr :upload, Phoenix.LiveView.UploadConfig, required: true
+  attr :label, :string, default: "Choose a file or drag one here"
+
+  def file_drop(assigns) do
+    ~H"""
+    <div
+      id={"#{@upload.ref}-drop"}
+      phx-drop-target={@upload.ref}
+      class="mt-2 flex flex-col items-center gap-2 rounded-md border-2 border-dashed border-zinc-300 px-4 py-6 text-sm text-zinc-600 transition-colors hover:border-zinc-500"
+    >
+      <.icon name="hero-arrow-up-tray" class="size-6 text-zinc-400" />
+      <label class="cursor-pointer">
+        <span class="font-medium text-zinc-900 underline">{@label}</span>
+        <.live_file_input upload={@upload} class="sr-only" />
+      </label>
+      <.error :for={err <- upload_errors(@upload)}>{upload_error(err)}</.error>
+      <.error :for={{entry, err} <- entry_errors(@upload)}>
+        {entry.client_name}: {upload_error(err)}
+      </.error>
+    </div>
+    """
+  end
+
+  defp entry_errors(upload) do
+    for entry <- upload.entries, err <- upload_errors(upload, entry), do: {entry, err}
+  end
+
+  defp upload_error(:too_large), do: "file is too large"
+  defp upload_error(:not_accepted), do: "file type is not accepted"
+  defp upload_error(:too_many_files), do: "one file at a time"
+  defp upload_error(other), do: to_string(other)
+
+  @doc """
   Renders a header with title.
   """
   slot :inner_block, required: true

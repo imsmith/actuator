@@ -51,6 +51,17 @@ defmodule ActuatorWeb.TransducerLiveTest do
       assert Instances.lookup("new-one")
     end
 
+    test "uploading a file fills source and name", %{conn: conn} do
+      {:ok, form_live, _html} = live(conn, ~p"/admin/transducers/new")
+
+      form_live
+      |> file_input("#transducer-form", :file, [%{name: "Lights 2.tcl", content: valid_source()}])
+      |> render_upload("Lights 2.tcl")
+
+      assert has_element?(form_live, "#transducer_source", "place inbox")
+      assert has_element?(form_live, "#transducer_name[value=lights-2]")
+    end
+
     test "updates and deletes", %{conn: conn, transducer: transducer} do
       {:ok, index_live, _html} = live(conn, ~p"/admin/transducers")
 

@@ -19,6 +19,7 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
 
       <.form for={@form} id="api_spec-form" phx-change="validate" phx-submit="save">
         <.input field={@form[:name]} type="text" label="Name" />
+        <.file_drop upload={@uploads.file} />
         <.input
           field={@form[:source]}
           type="textarea"
@@ -47,6 +48,13 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
     {:ok,
      socket
      |> assign(:return_to, return_to(params["return_to"]))
+     |> allow_upload(:file,
+       accept: :any,
+       max_entries: 1,
+       max_file_size: 2_000_000,
+       auto_upload: true,
+       progress: &handle_progress/3
+     )
      |> apply_action(socket.assigns.live_action, params)}
   end
 
@@ -69,6 +77,30 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
     |> assign(:page_title, "New API spec")
     |> assign(:api_spec, api_spec)
     |> assign(:form, to_form(ApiSpecs.change_api_spec(api_spec)))
+  end
+
+  # sobelow_skip ["Traversal.FileModule"]
+  # `path` is the temp file LiveView wrote for this upload, not user input.
+  defp handle_progress(:file, %{done?: true} = entry, socket) do
+    source =
+      consume_uploaded_entry(socket, entry, fn %{path: path} -> {:ok, File.read!(path)} end)
+
+    params =
+      socket.assigns.form.params
+      |> Map.put("source", source)
+      |> Map.update("name", name_from(entry.client_name), &blank_or(&1, entry.client_name))
+
+    changeset = ApiSpecs.change_api_spec(socket.assigns.api_spec, params)
+    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+  end
+
+  defp handle_progress(:file, _entry, socket), do: {:noreply, socket}
+
+  defp blank_or("", filename), do: name_from(filename)
+  defp blank_or(name, _filename), do: name
+
+  defp name_from(filename) do
+    filename |> Path.rootname() |> String.downcase() |> String.replace(~r/[^a-z0-9-]+/, "-")
   end
 
   @impl true
