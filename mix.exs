@@ -77,6 +77,7 @@ defmodule Actuator.MixProject do
       {:bandit, "~> 1.5"},
       {:comn, "~> 0.7.0", github: "imsmith/comn"},
       {:ex_cpn, github: "imsmith/ex_cpn", tag: "v0.1.0"},
+      {:ex_yang, github: "imsmith/ex_yang", tag: "v0.3.0"},
       {:yaml_elixir, "~> 2.11"},
       {:busybody_client, "~> 0.1.0", github: "imsmith/busybody-client", only: :dev},
       {:vet_cli, path: Path.expand("~/github/vet/apps/vet_cli"), only: :dev, runtime: false},

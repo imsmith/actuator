@@ -45,6 +45,11 @@ defmodule ActuatorWeb.Router do
     live "/api_specs/:id", ApiSpecLive.Show, :show
     live "/api_specs/:id/edit", ApiSpecLive.Form, :edit
 
+    live "/yang_modules", YangModuleLive.Index, :index
+    live "/yang_modules/new", YangModuleLive.Form, :new
+    live "/yang_modules/:id", YangModuleLive.Show, :show
+    live "/yang_modules/:id/edit", YangModuleLive.Form, :edit
+
     live "/listener", ListenerDocLive, :index
   end
 

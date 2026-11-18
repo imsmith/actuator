@@ -21,7 +21,11 @@ defmodule Actuator.Transducers.Transducer do
 
   @name_format ~r/^[a-z0-9][a-z0-9-]*$/
 
-  @doc "Validates name, source (parse + `ExCpn.validate/1`), and that `entry_place` exists in the net."
+  @doc """
+  Validates name, source (parse + `ExCpn.validate/1`), that place types resolve
+  against imported YANG modules (`Actuator.YangModules.resolve/1`), and that
+  `entry_place` exists in the net.
+  """
   @spec changeset(t, map) :: Ecto.Changeset.t()
   def changeset(transducer, attrs) do
     transducer
@@ -45,12 +49,21 @@ defmodule Actuator.Transducers.Transducer do
   defp validate_net(changeset) do
     with source when is_binary(source) <- get_field(changeset, :source),
          {:ok, net} <- ExCpn.parse(source),
-         {:ok, net} <- ExCpn.validate(net) do
+         {:ok, net} <- ExCpn.validate(net),
+         [] <- Actuator.YangModules.resolve(net) do
       validate_entry_place(changeset, net)
     else
-      nil -> changeset
-      {:error, {line, msg}} -> add_error(changeset, :source, "line #{line}: #{msg}")
-      {:error, problems} -> Enum.reduce(problems, changeset, &add_problem/2)
+      nil ->
+        changeset
+
+      {:error, {line, msg}} ->
+        add_error(changeset, :source, "line #{line}: #{msg}")
+
+      {:error, problems} ->
+        Enum.reduce(problems, changeset, &add_problem/2)
+
+      unresolved when is_list(unresolved) ->
+        Enum.reduce(unresolved, changeset, &add_error(&2, :source, &1))
     end
   end
 

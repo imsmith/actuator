@@ -29,8 +29,16 @@ per-transducer tokens stored with the definition, then real principals.
 ### Listener token is the raw JSON body
 
 `POST /t/:name` puts the whole body on the entry place with no schema check.
-The place's YANG type is recorded but not enforced. Upgrade: validate the body
-against the YANG type via `ex_yang` before accepting.
+The entry place's YANG type now resolves to a stored module node, but the
+body is not checked against it: `ex_yang` has no RFC 7951 instance validator
+yet. Upgrade: when it does, validate the body against the entry place's node
+before accepting, and derive the listener spec's request schema from it.
+
+### Place types are only checked when the net imports
+
+`Actuator.YangModules.resolve/1` skips a net with no `yang import` lines, so
+the lamp demo's `home:request` passes with nothing stored. Upgrade: once
+every net in use imports its modules, make an untyped prefix an error.
 
 ### API spec `auth_header` is stored in plaintext
 

@@ -6,7 +6,8 @@ transducer that converts HTTPS requests into changes to an API endpoint.  This p
 ## What exists today
 
 The prototype is a Phoenix 1.8 app on SQLite with one admin user. The action
-model is the part that runs; YANG types are recorded but not enforced, Gherkin
+model is the part that runs; YANG modules are stored and place types resolve
+against them, but request bodies are not yet checked against them. Gherkin
 and Anemos are not wired in yet.
 
 ```text
@@ -27,13 +28,19 @@ HTTPS request ──▶ POST /t/<name> ──▶ token on the entry place
   delete stop. `Actuator.Transducers.Instances`.
 * **Listener** `POST /t/<name>` puts the JSON body on the entry place and
   replies `202`. `ActuatorWeb.TransducerController`.
-* **API specs** are OpenAPI 3 documents stored as pasted, JSON or YAML, with a
-  base URL and an optional auth header. `Actuator.ApiSpecs`.
+* **API specs** are OpenAPI 3 documents, JSON or YAML, with a base URL and an
+  optional auth header. `Actuator.ApiSpecs`.
+* **YANG modules** are stored as given, name and prefix read from the source.
+  A net that says `yang import home` must have `home` stored, and every
+  `place -type hm:request` must name a top-level node, typedef, or grouping
+  of it. A net with no imports is not checked. `Actuator.YangModules`.
 * **Bindings** attach one transition to one operation. When it fires, the
   consumed token becomes the request and the response becomes the produced
   token. `Actuator.Transducers.Action`.
 * **Admin UI** under `/admin`: transducers with live markings and journal
-  events, API specs with their operations, bindings, and the listener API doc.
+  events, API specs with their operations, YANG modules, bindings, and the
+  listener API doc. Every source form takes a pasted document or a dropped
+  file.
 * **Published listener API** at `GET /t/openapi.json`.
 * **Telemetry** events for fired, failed, accepted, rejected, with counters on
   LiveDashboard. `Actuator.Transducers.Telemetry`.

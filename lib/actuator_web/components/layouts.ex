@@ -44,6 +44,7 @@ defmodule ActuatorWeb.Layouts do
         <nav class="flex items-center gap-1 text-sm">
           <.nav_link navigate={~p"/admin/transducers"}>Transducers</.nav_link>
           <.nav_link navigate={~p"/admin/api_specs"}>API specs</.nav_link>
+          <.nav_link navigate={~p"/admin/yang_modules"}>YANG</.nav_link>
           <.nav_link navigate={~p"/admin/listener"}>Listener API</.nav_link>
         </nav>
       </div>
