@@ -69,7 +69,7 @@ defmodule ActuatorWeb.TransducerLive.Form do
     transducer = Transducers.get_transducer!(id)
 
     socket
-    |> assign(:page_title, "Edit Transducer")
+    |> assign(:page_title, "Edit transducer")
     |> assign(:transducer, transducer)
     |> assign(:form, to_form(Transducers.change_transducer(transducer)))
   end
@@ -78,7 +78,7 @@ defmodule ActuatorWeb.TransducerLive.Form do
     transducer = %Transducer{}
 
     socket
-    |> assign(:page_title, "New Transducer")
+    |> assign(:page_title, "New transducer")
     |> assign(:transducer, transducer)
     |> assign(:form, to_form(Transducers.change_transducer(transducer)))
   end

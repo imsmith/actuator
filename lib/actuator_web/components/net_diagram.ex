@@ -31,9 +31,9 @@ defmodule ActuatorWeb.NetDiagram do
     ~H"""
     <svg
       id={@id}
-      viewBox={"0 0 #{@layout.width} #{@layout.height}"}
+      viewBox={"0 0 #{@layout.width} #{@layout.height + 16}"}
       class="w-full max-w-4xl"
-      style={"max-height: #{@layout.height}px; font-family: var(--font-mono)"}
+      style={"max-height: #{@layout.height + 16}px; font-family: var(--font-mono)"}
       role="img"
       aria-label="Petri net"
     >

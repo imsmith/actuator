@@ -48,9 +48,8 @@ defmodule ActuatorWeb.TransducerLive.Show do
       </.card>
 
       <div class="mb-4 grid gap-4 lg:grid-cols-2">
-        <.card id="marking" density={:compact} flush>
+        <.card id="marking" title="Marking" density={:compact} flush>
           <:actions><.state_tag state={@status && @status.state} /></:actions>
-          <h2 class="ds-label mb-2 px-4">Marking</h2>
           <table :if={@status} class="ds-table ds-table--dense">
             <thead>
               <tr>
@@ -83,7 +82,10 @@ defmodule ActuatorWeb.TransducerLive.Show do
         </.card>
 
         <.card id="events" title="Events" density={:compact} flush>
-          <.log_view id="event-log" lines={@events} height="16rem" />
+          <.log_view :if={@events != []} id="event-log" lines={@events} height="16rem" />
+          <.state_panel :if={@events == []} title="No events yet.">
+            Fired and failed transitions appear here as they happen.
+          </.state_panel>
         </.card>
       </div>
 
