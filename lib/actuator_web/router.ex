@@ -14,10 +14,11 @@ defmodule ActuatorWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {ActuatorWeb.Layouts, :root}
     plug :protect_from_forgery
-    # 'unsafe-inline' for scripts covers the root layout's theme bootstrap; see ISSUES.md.
+    # style-src keeps 'unsafe-inline' for the style attributes LiveView and the
+    # design-system components set; see ISSUES.md.
     plug :put_secure_browser_headers, %{
       "content-security-policy" =>
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
     }
   end
 

@@ -1,5 +1,10 @@
 defmodule ActuatorWeb.NetDiagram do
-  @moduledoc "SVG rendering of a net with its current marking."
+  @moduledoc """
+  SVG rendering of a net with its current marking, on the design system's
+  chrome roles: structure in `text`/`border`/`surface`, the token count in
+  `accent`, an enabled transition as an `accent` fill with glow, a bound one
+  outlined in `accent` with the operation under its name.
+  """
   use Phoenix.Component
 
   alias Actuator.Transducers.Layout
@@ -28,7 +33,7 @@ defmodule ActuatorWeb.NetDiagram do
       id={@id}
       viewBox={"0 0 #{@layout.width} #{@layout.height}"}
       class="w-full max-w-4xl"
-      style={"max-height: #{@layout.height}px"}
+      style={"max-height: #{@layout.height}px; font-family: var(--font-mono)"}
       role="img"
       aria-label="Petri net"
     >
@@ -42,7 +47,7 @@ defmodule ActuatorWeb.NetDiagram do
           markerHeight="7"
           orient="auto-start-reverse"
         >
-          <path d="M 0 0 L 10 5 L 0 10 z" class="fill-zinc-400" />
+          <path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--muted)" />
         </marker>
       </defs>
 
@@ -52,7 +57,7 @@ defmodule ActuatorWeb.NetDiagram do
         y1={trim(@layout.nodes[from], @layout.nodes[to], from).y}
         x2={trim(@layout.nodes[to], @layout.nodes[from], to).x}
         y2={trim(@layout.nodes[to], @layout.nodes[from], to).y}
-        class="stroke-zinc-400"
+        style="stroke:var(--muted)"
         stroke-width="1.5"
         marker-end={"url(##{@id}-arrow)"}
       >
@@ -64,22 +69,17 @@ defmodule ActuatorWeb.NetDiagram do
         id={"#{@id}-place-#{p.name}"}
         transform={"translate(#{pos.x},#{pos.y})"}
       >
-        <circle
-          r="22"
-          class={[
-            "stroke-zinc-700 stroke-2",
-            if(tokens(@marking, p.name) > 0, do: "fill-amber-100", else: "fill-white")
-          ]}
-        />
+        <circle r="22" stroke-width="2" style={place_style(tokens(@marking, p.name))} />
         <text
-          :if={tokens(@marking, p.name) > 0}
           text-anchor="middle"
           dominant-baseline="central"
-          class="fill-zinc-900 font-mono text-base font-semibold"
+          font-size="16"
+          font-weight="700"
+          style={count_style(tokens(@marking, p.name))}
         >
           {tokens(@marking, p.name)}
         </text>
-        <text y="36" text-anchor="middle" class="fill-zinc-700 font-mono text-[11px]">{p.name}</text>
+        <text y="36" text-anchor="middle" font-size="11" style="fill:var(--text)">{p.name}</text>
         <title>{p.name} : {p.type}</title>
       </g>
 
@@ -94,22 +94,18 @@ defmodule ActuatorWeb.NetDiagram do
           width="18"
           height="48"
           rx="2"
-          class={[
-            "stroke-2",
-            t.name in @enabled && "fill-emerald-500 stroke-emerald-700",
-            t.name not in @enabled && Map.has_key?(@bindings, t.name) && "fill-sky-200 stroke-sky-700",
-            t.name not in @enabled && not Map.has_key?(@bindings, t.name) &&
-              "fill-zinc-300 stroke-zinc-700"
-          ]}
+          stroke-width="2"
+          style={transition_style(t.name in @enabled, Map.has_key?(@bindings, t.name))}
         />
-        <text y="38" text-anchor="middle" class="fill-zinc-700 font-mono text-[11px]">{t.name}</text>
+        <text y="38" text-anchor="middle" font-size="11" style="fill:var(--text)">{t.name}</text>
         <text
           :if={@bindings[t.name]}
           y="51"
           text-anchor="middle"
-          class="fill-sky-700 font-mono text-[10px]"
+          font-size="10"
+          style="fill:var(--accent)"
         >
-          {@bindings[t.name]}
+          ⇄ {@bindings[t.name]}
         </text>
         <title>{t.label}</title>
       </g>
@@ -118,6 +114,18 @@ defmodule ActuatorWeb.NetDiagram do
   end
 
   defp tokens(marking, place), do: length(Map.get(marking, place, []))
+
+  defp place_style(0), do: "fill:var(--surface);stroke:var(--border)"
+  defp place_style(_), do: "fill:var(--surface-raised);stroke:var(--text)"
+
+  defp count_style(0), do: "fill:var(--muted)"
+  defp count_style(_), do: "fill:var(--accent)"
+
+  defp transition_style(true, _bound),
+    do: "fill:var(--accent);stroke:var(--accent);filter:drop-shadow(0 0 6px var(--glow))"
+
+  defp transition_style(false, true), do: "fill:var(--accent-tint);stroke:var(--accent)"
+  defp transition_style(false, false), do: "fill:var(--surface);stroke:var(--border)"
 
   # Shorten an arc so it starts and ends at the node border instead of its centre.
   defp trim(%{x: x1, y: y1}, %{x: x2, y: y2}, {kind, _}) do

@@ -30,7 +30,7 @@ defmodule ActuatorWeb.YangModuleLiveTest do
       |> render_submit()
       |> follow_redirect(conn)
 
-    assert html =~ "YANG module created successfully"
+    assert html =~ "Created home."
   end
 
   test "show lists place types", %{conn: conn, yang_module: m} do
@@ -41,7 +41,8 @@ defmodule ActuatorWeb.YangModuleLiveTest do
 
   test "deletes from the index", %{conn: conn, yang_module: m} do
     {:ok, view, _html} = live(conn, ~p"/admin/yang_modules")
-    assert view |> element("#yang_modules-#{m.id} a", "Delete") |> render_click()
+    view |> element("#yang_modules-#{m.id} button", "Delete") |> render_click()
+    view |> form("#delete-confirm", name: m.name) |> render_submit()
     refute has_element?(view, "#yang_modules-#{m.id}")
   end
 end

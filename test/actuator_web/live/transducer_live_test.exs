@@ -35,7 +35,10 @@ defmodule ActuatorWeb.TransducerLiveTest do
       {:ok, index_live, _html} = live(conn, ~p"/admin/transducers")
 
       {:ok, form_live, _} =
-        index_live |> element("a", "New Transducer") |> render_click() |> follow_redirect(conn)
+        index_live
+        |> element("header a", "New transducer")
+        |> render_click()
+        |> follow_redirect(conn)
 
       html = form_live |> form("#transducer-form", transducer: @invalid_attrs) |> render_change()
       assert html =~ "line 2: place &#39;a&#39; missing -type"
@@ -47,7 +50,7 @@ defmodule ActuatorWeb.TransducerLiveTest do
         |> render_submit()
         |> follow_redirect(conn)
 
-      assert html =~ "Transducer created successfully"
+      assert html =~ "Created new-one."
       assert Instances.lookup("new-one")
     end
 
@@ -77,12 +80,15 @@ defmodule ActuatorWeb.TransducerLiveTest do
         |> render_submit()
         |> follow_redirect(conn)
 
-      assert html =~ "Transducer updated successfully"
+      assert html =~ "Saved #{transducer.name}."
       assert Instances.lookup(transducer.name) == nil
 
       {:ok, index_live, _html} = live(conn, ~p"/admin/transducers")
-      assert index_live |> element("#transducers-#{transducer.id} a", "Delete") |> render_click()
+      index_live |> element("#transducers-#{transducer.id} button", "Delete") |> render_click()
+      assert has_element?(index_live, "#delete-modal", "Delete #{transducer.name}?")
+      index_live |> form("#delete-confirm", name: transducer.name) |> render_submit()
       refute has_element?(index_live, "#transducers-#{transducer.id}")
+      refute has_element?(index_live, "#delete-modal")
     end
   end
 
@@ -121,7 +127,7 @@ defmodule ActuatorWeb.TransducerLiveTest do
     test "rejects a non-object token", %{conn: conn, transducer: transducer} do
       {:ok, view, _html} = live(conn, ~p"/admin/transducers/#{transducer}")
       html = view |> form("#inject-form", inject: %{json: "[1,2]"}) |> render_submit()
-      assert html =~ "Token must be a JSON object"
+      assert html =~ "Token must be a JSON object."
     end
   end
 end

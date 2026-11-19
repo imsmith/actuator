@@ -8,38 +8,33 @@ defmodule ActuatorWeb.YangModuleLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} section={:yang_modules}>
+      <.breadcrumb items={[
+        %{label: "YANG modules", navigate: ~p"/admin/yang_modules"},
+        %{label: @yang_module.name}
+      ]} />
       <.header>
-        <span class="font-mono">{@yang_module.name}</span>
-        <:subtitle>Prefix <code>{@yang_module.prefix}</code></:subtitle>
+        {@yang_module.name}
         <:actions>
-          <.button navigate={~p"/admin/yang_modules"}><.icon name="hero-arrow-left" /></.button>
           <.button
-            variant="primary"
+            icon="m-edit"
             navigate={~p"/admin/yang_modules/#{@yang_module}/edit?return_to=show"}
           >
-            <.icon name="hero-pencil-square" /> Edit module
+            Edit
           </.button>
         </:actions>
       </.header>
 
-      <section id="nodes" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Place types</h2>
-        <ul class="flex flex-wrap gap-2">
-          <li
-            :for={n <- @nodes}
-            id={"node-#{n}"}
-            class="rounded bg-zinc-100 px-2 py-1 font-mono text-sm"
-          >
-            {@yang_module.prefix}:{n}
-          </li>
-        </ul>
-      </section>
+      <.key_value class="mb-6">
+        <:item key="Prefix">{@yang_module.prefix}</:item>
+        <:item key="Place types">
+          <span id="nodes" class="flex flex-wrap gap-2">
+            <.tag :for={n <- @nodes} id={"node-#{n}"}>{@yang_module.prefix}:{n}</.tag>
+          </span>
+        </:item>
+      </.key_value>
 
-      <section id="source" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Source</h2>
-        <pre class="text-xs bg-zinc-100 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @yang_module.source %></pre>
-      </section>
+      <.code_block id="source" title="source · yang">{@yang_module.source}</.code_block>
     </Layouts.app>
     """
   end

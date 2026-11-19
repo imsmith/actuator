@@ -8,35 +8,54 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
-      <.header>
-        {@page_title}
-        <:subtitle>
-          Paste an OpenAPI 3 document, JSON or YAML. Base URL defaults to the first server in the spec.
-          The auth header is sent verbatim as <code>Authorization</code> on every call.
-        </:subtitle>
-      </.header>
+    <Layouts.app flash={@flash} section={:api_specs}>
+      <.breadcrumb items={[
+        %{label: "API specs", navigate: ~p"/admin/api_specs"},
+        %{label: @page_title}
+      ]} />
+      <.header>{@page_title}</.header>
 
-      <.form for={@form} id="api_spec-form" phx-change="validate" phx-submit="save">
-        <.input field={@form[:name]} type="text" label="Name" />
-        <.file_drop upload={@uploads.file} />
-        <.input
-          field={@form[:source]}
-          type="textarea"
-          label="Source"
-          rows="18"
-          class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm"
-        />
-        <.input field={@form[:base_url]} type="text" label="Base URL" placeholder="from spec servers" />
-        <.input
-          field={@form[:auth_header]}
-          type="password"
-          label="Auth header"
-          placeholder="Bearer …"
-        />
-        <footer>
-          <.button phx-disable-with="Saving..." variant="primary">Save API spec</.button>
+      <.form
+        for={@form}
+        id="api_spec-form"
+        phx-change="validate"
+        phx-submit="save"
+        style="max-width:72ch"
+      >
+        <.fieldset
+          legend="Document"
+          hint="An OpenAPI 3 document, JSON or YAML. Base URL defaults to the first server in the spec."
+        >
+          <.input field={@form[:name]} type="text" label="Name" />
+          <.file_drop
+            upload={@uploads.file}
+            label="Drop a spec or choose a file"
+            hint="json · yaml · up to 2 MB"
+          />
+          <.input field={@form[:source]} type="textarea" label="Source" rows="18" spellcheck="false" />
+        </.fieldset>
+        <.fieldset
+          legend="Calls"
+          hint="The auth header is sent verbatim as Authorization on every call."
+        >
+          <.input
+            field={@form[:base_url]}
+            type="text"
+            label="Base URL"
+            placeholder="from spec servers"
+          />
+          <.input
+            field={@form[:auth_header]}
+            type="password"
+            label="Auth header"
+            placeholder="Bearer …"
+          />
+        </.fieldset>
+        <footer class="mt-4 flex justify-end gap-2">
           <.button navigate={return_path(@return_to, @api_spec)}>Cancel</.button>
+          <.button type="submit" variant={:primary} icon="m-check" phx-disable-with="Saving">
+            Save
+          </.button>
         </footer>
       </.form>
     </Layouts.app>
@@ -118,7 +137,7 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
       {:ok, api_spec} ->
         {:noreply,
          socket
-         |> put_flash(:info, "API spec updated successfully")
+         |> put_flash(:info, "Saved #{api_spec.name}.")
          |> push_navigate(to: return_path(socket.assigns.return_to, api_spec))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -131,7 +150,7 @@ defmodule ActuatorWeb.ApiSpecLive.Form do
       {:ok, api_spec} ->
         {:noreply,
          socket
-         |> put_flash(:info, "API spec created successfully")
+         |> put_flash(:info, "Created #{api_spec.name}.")
          |> push_navigate(to: return_path(socket.assigns.return_to, api_spec))}
 
       {:error, %Ecto.Changeset{} = changeset} ->

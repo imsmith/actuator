@@ -11,28 +11,30 @@ defmodule ActuatorWeb.TransducerLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} section={:transducers}>
+      <.breadcrumb items={[
+        %{label: "Transducers", navigate: ~p"/admin/transducers"},
+        %{label: @transducer.name}
+      ]} />
       <.header>
-        <span class="font-mono">{@transducer.name}</span>
-        <:subtitle>
-          Listener <code>POST /t/{@transducer.name}</code>
-          puts the body on <code>{@transducer.entry_place}</code>.
-        </:subtitle>
+        {@transducer.name}
         <:actions>
-          <.button navigate={~p"/admin/transducers"}>
-            <.icon name="hero-arrow-left" />
-          </.button>
-          <.button
-            variant="primary"
-            navigate={~p"/admin/transducers/#{@transducer}/edit?return_to=show"}
-          >
-            <.icon name="hero-pencil-square" /> Edit
+          <.button icon="m-edit" navigate={~p"/admin/transducers/#{@transducer}/edit?return_to=show"}>
+            Edit
           </.button>
         </:actions>
       </.header>
 
-      <section id="diagram" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Net</h2>
+      <.key_value class="mb-6">
+        <:item key="Listener">POST /t/{@transducer.name} → {@transducer.entry_place}</:item>
+        <:item key="Entry type">{entry_type(@net, @transducer.entry_place)}</:item>
+        <:item key="Bindings">
+          <span :if={@bindings == %{}} style="color:var(--muted)">none</span>
+          <span :for={{t, b} <- @bindings} class="mr-4">{t} → {b.api_spec.name}:{b.operation_id}</span>
+        </:item>
+      </.key_value>
+
+      <.card id="diagram" title="Net" density={:compact} class="mb-4">
         <.net
           id="net-diagram"
           net={@net}
@@ -40,120 +42,102 @@ defmodule ActuatorWeb.TransducerLive.Show do
           enabled={enabled_names(@net, @status)}
           bindings={Map.new(@bindings, fn {t, b} -> {t, "#{b.api_spec.name}:#{b.operation_id}"} end)}
         />
-        <p class="text-xs text-zinc-500">
-          Amber places hold tokens. Green transitions are enabled now; blue ones are bound to an operation.
+        <p class="ds-label mt-2">
+          count = tokens held · accent fill = enabled · ⇄ bound to an operation
         </p>
-      </section>
+      </.card>
 
-      <section id="marking" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Marking
-          <span
-            :if={@status}
-            data-role="status"
-            class="ml-2 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800"
-          >{@status.state}</span>
-          <span
-            :if={!@status}
-            data-role="status"
-            class="ml-2 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500"
-          >stopped</span>
-        </h2>
-        <table
-          :if={@status}
-          class="w-full text-sm [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-zinc-500 [&_td]:py-2 [&_td]:align-top [&_thead]:border-b [&_thead]:border-zinc-200 [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-zinc-100"
-        >
-          <thead>
-            <tr>
-              <th>Place</th>
-              <th>Tokens</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr :for={{place, tokens} <- Enum.sort(@status.marking)} id={"place-#{place}"}>
-              <td class="font-mono">{place}</td>
-              <td class="font-mono text-xs">
-                <span :if={tokens == []} class="text-zinc-300">—</span>
-                <div :for={token <- tokens}>{Jason.encode!(token)}</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p :if={!@status} class="text-sm text-zinc-500">
-          Not running. Enable the transducer to start it.
-        </p>
-      </section>
+      <div class="mb-4 grid gap-4 lg:grid-cols-2">
+        <.card id="marking" density={:compact} flush>
+          <:actions><.state_tag state={@status && @status.state} /></:actions>
+          <h2 class="ds-label mb-2 px-4">Marking</h2>
+          <table :if={@status} class="ds-table ds-table--dense">
+            <thead>
+              <tr>
+                <th scope="col" class="ds-table__th">Place</th>
+                <th scope="col" class="ds-table__th">Tokens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                :for={{place, tokens} <- Enum.sort(@status.marking)}
+                id={"place-#{place}"}
+                class="ds-table__row"
+              >
+                <td class="ds-table__td" style="white-space:nowrap">
+                  {place} <span class="ds-data" style="color:var(--accent)">{length(tokens)}</span>
+                </td>
+                <td class="ds-table__td" style="word-break:break-all">
+                  <span :if={tokens == []} style="color:var(--muted)">—</span>
+                  <div :for={token <- tokens}>{Jason.encode!(token)}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <.state_panel :if={!@status} title="Not running.">
+            Enable the transducer to start it.
+            <:action>
+              <.button navigate={~p"/admin/transducers/#{@transducer}/edit?return_to=show"}>Edit</.button>
+            </:action>
+          </.state_panel>
+        </.card>
 
-      <section id="events" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Recent events</h2>
-        <ul id="event-list" phx-update="stream" class="font-mono text-xs space-y-1">
-          <li :for={{id, ev} <- @streams.events} id={id} class={ev.kind == :failed && "text-red-600"}>
-            {ev.text}
-          </li>
-        </ul>
-      </section>
+        <.card id="events" title="Events" density={:compact} flush>
+          <.log_view id="event-log" lines={@events} height="16rem" />
+        </.card>
+      </div>
 
-      <section :if={@status} id="inject" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Inject a token</h2>
-        <.form for={@inject} id="inject-form" phx-submit="inject" class="flex gap-2 items-start">
-          <.input
-            field={@inject[:json]}
-            type="text"
-            placeholder={~s({"device": "lamp-1"})}
-            class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm"
-          />
-          <.button variant="primary">Put on {@transducer.entry_place}</.button>
+      <.card :if={@status} id="inject" title="Inject a token" density={:compact} class="mb-4">
+        <.form for={@inject} id="inject-form" phx-submit="inject" class="flex items-end gap-2">
+          <div class="grow">
+            <.input field={@inject[:json]} type="text" placeholder={~s({"device": "lamp-1"})} />
+          </div>
+          <.button type="submit" variant={:primary} icon="m-send">Put on {@transducer.entry_place}</.button>
         </.form>
-      </section>
+      </.card>
 
-      <section id="bindings" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Bindings</h2>
-        <p class="text-sm text-zinc-500">
+      <.card id="bindings" title="Bindings" density={:compact} flush class="mb-4">
+        <p class="px-4 pb-2" style="color:var(--muted);font-size:var(--text-small);margin:0">
           A bound transition performs an API operation when it fires. Unbound transitions move tokens as written.
         </p>
-        <table class="w-full text-sm [&_th]:py-2 [&_th]:text-left [&_th]:font-medium [&_th]:text-zinc-500 [&_td]:py-2 [&_td]:align-top [&_thead]:border-b [&_thead]:border-zinc-200 [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-zinc-100">
+        <table class="ds-table ds-table--compact">
           <thead>
             <tr>
-              <th>Transition</th>
-              <th>Operation</th>
-              <th></th>
+              <th scope="col" class="ds-table__th">Transition</th>
+              <th scope="col" class="ds-table__th">Operation</th>
+              <th scope="col" class="ds-table__th"><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
-            <tr :for={t <- @transitions} id={"binding-#{t.name}"}>
-              <td class="font-mono align-top">{t.name}</td>
+            <tr :for={t <- @transitions} id={"binding-#{t.name}"} class="ds-table__row">
+              <td class="ds-table__td">{t.name}</td>
               <%= if binding = @bindings[t.name] do %>
-                <td class="font-mono text-xs">{binding.api_spec.name}:{binding.operation_id}</td>
-                <td>
-                  <.link phx-click="unbind" phx-value-id={binding.id} data-confirm="Unbind #{t.name}?">Unbind</.link>
+                <td class="ds-table__td">{binding.api_spec.name}:{binding.operation_id}</td>
+                <td class="ds-table__td" style="width:0">
+                  <.link phx-click="unbind" phx-value-id={binding.id} class="ds-link">Unbind</.link>
                 </td>
               <% else %>
-                <td colspan="2">
-                  <form id={"bind-#{t.name}"} phx-submit="bind" class="flex gap-2 items-center">
+                <td class="ds-table__td" colspan="2">
+                  <form id={"bind-#{t.name}"} phx-submit="bind" class="flex items-center gap-2">
                     <input type="hidden" name="transition" value={t.name} />
-                    <select
+                    <.input
+                      type="select"
                       name="operation"
-                      class="rounded-md border border-zinc-300 bg-white px-2 py-1 font-mono text-xs"
+                      value=""
+                      prompt="choose an operation"
+                      options={@operation_options}
                       required
-                    >
-                      <option value="">choose an operation</option>
-                      <option :for={{label, value} <- @operation_options} value={value}>
-                        {label}
-                      </option>
-                    </select>
-                    <button class="rounded-md border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-100">Bind</button>
+                    />
+                    <.button type="submit" size={:sm}>Bind</.button>
                   </form>
                 </td>
               <% end %>
             </tr>
           </tbody>
         </table>
-      </section>
+      </.card>
 
-      <section id="source" class="space-y-2">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Source</h2>
-        <pre class="text-xs bg-zinc-100 rounded-lg p-4 overflow-x-auto" phx-no-curly-interpolation><%= @transducer.source %></pre>
-      </section>
+      <.code_block id="source" title="source · cpn-spec 1.0">{@transducer.source}</.code_block>
     </Layouts.app>
     """
   end
@@ -174,7 +158,11 @@ defmodule ActuatorWeb.TransducerLive.Show do
      |> assign(:net, Transducers.Transducer.net(transducer))
      |> assign(:transitions, Transducers.Transducer.net(transducer).transitions)
      |> assign_bindings(transducer)
-     |> stream(:events, [])}
+     |> assign(:events, [])}
+  end
+
+  defp entry_type(net, place) do
+    Enum.find_value(net.places, "untyped", fn p -> p.name == place && p.type end)
   end
 
   defp enabled_names(_net, nil), do: []
@@ -209,7 +197,7 @@ defmodule ActuatorWeb.TransducerLive.Show do
              socket
              |> assign_bindings(transducer)
              |> assign(:status, Instances.status(transducer.name))
-             |> put_flash(:info, "Bound #{transition}")}
+             |> put_flash(:info, "Bound #{transition}.")}
 
           {:error, %Ecto.Changeset{} = cs} ->
             {:noreply, put_flash(socket, :error, "Could not bind: #{inspect(cs.errors)}")}
@@ -229,7 +217,7 @@ defmodule ActuatorWeb.TransducerLive.Show do
      socket
      |> assign_bindings(transducer)
      |> assign(:status, Instances.status(transducer.name))
-     |> put_flash(:info, "Unbound #{binding.transition}")}
+     |> put_flash(:info, "Unbound #{binding.transition}.")}
   end
 
   def handle_event("inject", %{"inject" => %{"json" => json}}, socket) do
@@ -240,10 +228,12 @@ defmodule ActuatorWeb.TransducerLive.Show do
       :ok = ExCpn.Instance.put_token(pid, socket.assigns.transducer.entry_place, token)
 
       {:noreply,
-       socket |> assign(:status, Instances.status(name)) |> put_flash(:info, "Token placed")}
+       socket
+       |> assign(:status, Instances.status(name))
+       |> put_flash(:info, "Put on #{socket.assigns.transducer.entry_place}.")}
     else
       nil -> {:noreply, put_flash(socket, :error, "Transducer is not running")}
-      _ -> {:noreply, put_flash(socket, :error, "Token must be a JSON object")}
+      _ -> {:noreply, put_flash(socket, :error, "Token must be a JSON object.")}
     end
   end
 
@@ -252,20 +242,23 @@ defmodule ActuatorWeb.TransducerLive.Show do
     {:noreply,
      socket
      |> assign(:status, Instances.status(name))
-     |> stream_insert(:events, describe(event), at: 0, limit: 50)}
+     |> update(:events, &Enum.take([describe(event) | &1], 50))}
   end
 
+  # ponytail: events are kept in the LiveView, newest first, 50 deep; the
+  # journal store replaces this when it exists.
   defp describe({:fired, t, binding, _marking}),
-    do: %{
-      id: System.unique_integer([:positive]),
-      kind: :fired,
-      text: "fired #{t} #{Jason.encode!(binding)}"
-    }
+    do: line(:low, "fired #{t} #{Jason.encode!(binding)}")
 
   defp describe({:failed, t, reason, n}),
-    do: %{
+    do: line(:critical, "failed #{t} (#{n}) #{inspect(reason)}")
+
+  defp line(severity, msg) do
+    %{
       id: System.unique_integer([:positive]),
-      kind: :failed,
-      text: "failed #{t} (#{n}) #{inspect(reason)}"
+      ts: Time.utc_now() |> Time.truncate(:second) |> Time.to_string(),
+      severity: severity,
+      msg: msg
     }
+  end
 end

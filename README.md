@@ -40,7 +40,9 @@ HTTPS request ──▶ POST /t/<name> ──▶ token on the entry place
 * **Admin UI** under `/admin`: transducers with live markings and journal
   events, API specs with their operations, YANG modules, bindings, and the
   listener API doc. Every source form takes a pasted document or a dropped
-  file.
+  file. Built on [gos-ui](https://github.com/imsmith/gos-ui), the Phoenix
+  consumer of the GRID·OPS design system; one theme per deployment via
+  `config :actuator, theme: :tron, mode: :dark`.
 * **Published listener API** at `GET /t/openapi.json`.
 * **Telemetry** events for fired, failed, accepted, rejected, with counters on
   LiveDashboard. `Actuator.Transducers.Telemetry`.

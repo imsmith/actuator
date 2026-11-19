@@ -1,162 +1,80 @@
 defmodule ActuatorWeb.Layouts do
   @moduledoc """
-  This module holds layouts and related functionality
-  used by your application.
+  The root document and the app shell. Both are composed from gos-ui, the
+  Phoenix consumer of the GRID·OPS design system.
   """
   use ActuatorWeb, :html
 
-  # Embed all files in layouts/* within this module.
-  # The default root.html.heex file contains the HTML
-  # skeleton of your application, namely HTML headers
-  # and other static content.
   embed_templates "layouts/*"
 
+  @sections [
+    {:transducers, "Transducers", "m-hub", "/admin/transducers"},
+    {:api_specs, "API specs", "m-external", "/admin/api_specs"},
+    {:yang_modules, "YANG", "m-tool", "/admin/yang_modules"},
+    {:listener, "Listener API", "m-send", "/admin/listener"}
+  ]
+
   @doc """
-  Renders your app layout.
+  The app shell around every admin page: skip link, brand, the section label,
+  the sidebar nav, and the flash toasts.
 
-  This function is typically invoked from every template,
-  and it often contains your application menu, sidebar,
-  or similar.
-
-  ## Examples
-
-      <Layouts.app flash={@flash}>
-        <h1>Content</h1>
+      <Layouts.app flash={@flash} section={:transducers}>
+        ...
       </Layouts.app>
-
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
-
-  attr :current_scope, :map,
-    default: nil,
-    doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
-
+  attr :section, :atom, default: nil, doc: "which nav entry this page belongs to"
   slot :inner_block, required: true
 
   def app(assigns) do
+    assigns = assign(assigns, :items, nav_items())
+
     ~H"""
-    <header class="border-b border-zinc-200 bg-white">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <.link navigate={~p"/admin/transducers"} class="flex items-center gap-2 text-zinc-900">
-          <span class="inline-block h-3 w-3 rounded-full bg-emerald-500" aria-hidden="true"></span>
-          <span class="text-sm font-semibold tracking-wide">Actuator</span>
-        </.link>
-        <nav class="flex items-center gap-1 text-sm">
-          <.nav_link navigate={~p"/admin/transducers"}>Transducers</.nav_link>
-          <.nav_link navigate={~p"/admin/api_specs"}>API specs</.nav_link>
-          <.nav_link navigate={~p"/admin/yang_modules"}>YANG</.nav_link>
-          <.nav_link navigate={~p"/admin/listener"}>Listener API</.nav_link>
-        </nav>
-      </div>
-    </header>
-
-    <main class="px-4 py-10 sm:px-6">
-      <div class="mx-auto max-w-5xl space-y-8">
-        {render_slot(@inner_block)}
-      </div>
-    </main>
-
-    <.flash_group flash={@flash} />
-    """
-  end
-
-  attr :navigate, :string, required: true
-  slot :inner_block, required: true
-
-  defp nav_link(assigns) do
-    ~H"""
-    <.link
-      navigate={@navigate}
-      class="rounded-md px-3 py-1.5 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-    >
+    <.skip_link />
+    <.app_shell nav_width="12rem">
+      <:brand><.mark name="m-hub" size={18} /> ACTUATOR</:brand>
+      <:summary>
+        <span class="ds-label">{section_label(@section)}</span>
+      </:summary>
+      <:nav><.menu variant={:sidebar} selected={@section} items={@items} label="Admin" /></:nav>
       {render_slot(@inner_block)}
-    </.link>
-    """
-  end
+    </.app_shell>
 
-  @doc """
-  Shows the flash group with standard titles and content.
-
-  ## Examples
-
-      <.flash_group flash={@flash} />
-  """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-  attr :id, :string, default: "flash-group", doc: "the optional id of flash container"
-
-  def flash_group(assigns) do
-    ~H"""
-    <div id={@id} aria-live="polite">
-      <.flash kind={:info} flash={@flash} />
-      <.flash kind={:error} flash={@flash} />
-
-      <.flash
+    <.flash_toasts flash={@flash} />
+    <.toast_stack position={:top_right}>
+      <.toast
         id="client-error"
-        kind={:error}
-        title={gettext("We can't find the internet")}
-        phx-disconnected={
-          show(".phx-client-error #client-error")
-          |> JS.remove_attribute("hidden", to: ".phx-client-error #client-error")
-        }
-        phx-connected={hide("#client-error") |> JS.set_attribute({"hidden", ""})}
+        severity={:high}
+        duration={0}
         hidden
-      >
-        {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
-      </.flash>
-
-      <.flash
-        id="server-error"
-        kind={:error}
-        title={gettext("Something went wrong!")}
         phx-disconnected={
-          show(".phx-server-error #server-error")
-          |> JS.remove_attribute("hidden", to: ".phx-server-error #server-error")
+          JS.show(to: "#client-error", display: "flex") |> JS.remove_attribute("hidden")
         }
-        phx-connected={hide("#server-error") |> JS.set_attribute({"hidden", ""})}
-        hidden
+        phx-connected={JS.hide(to: "#client-error") |> JS.set_attribute({"hidden", ""})}
       >
-        {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
-      </.flash>
-    </div>
+        Connection lost. Reconnecting.
+      </.toast>
+    </.toast_stack>
     """
   end
 
+  defp nav_items do
+    for {id, label, icon, path} <- @sections,
+        do: %{id: id, label: label, icon: icon, navigate: path}
+  end
+
+  defp section_label(section) do
+    Enum.find_value(@sections, "", fn {id, label, _, _} -> id == section && label end)
+  end
+
   @doc """
-  Provides dark vs light theme toggle based on themes defined in app.css.
-
-  See <head> in root.html.heex which applies the theme before page load.
+  Theme and mode attributes for `<html>`, from gos-ui. One theme per
+  deployment: `config :actuator, theme: :matrix, mode: :light`.
   """
-  def theme_toggle(assigns) do
-    ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 [[data-theme-source=system]_&]:!left-0 transition-[left]" />
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="system"
-      >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="light"
-      >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="dark"
-      >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-    </div>
-    """
+  def theme_attrs do
+    GosUi.theme_attrs(
+      Application.get_env(:actuator, :theme, :tron),
+      Application.get_env(:actuator, :mode, :dark)
+    )
   end
 end

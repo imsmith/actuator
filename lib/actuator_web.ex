@@ -84,7 +84,12 @@ defmodule ActuatorWeb do
 
       # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components
+      # Design-system components (gos-ui), then Actuator's own on top. The
+      # excluded names are redefined in CoreComponents to take a FormField,
+      # a stream, or a link.
+      import GosUi.Components,
+        except: [button: 1, input: 1, table: 1, textarea: 1, checkbox: 1, select: 1]
+
       import ActuatorWeb.CoreComponents
       import ActuatorWeb.NetDiagram
 

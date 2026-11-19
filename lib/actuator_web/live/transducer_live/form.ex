@@ -8,29 +8,39 @@ defmodule ActuatorWeb.TransducerLive.Form do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
-      <.header>
-        {@page_title}
-        <:subtitle>
-          Source is a <code>cpn-spec 1.0</code> net. It is parsed and validated on every keystroke.
-        </:subtitle>
-      </.header>
+    <Layouts.app flash={@flash} section={:transducers}>
+      <.breadcrumb items={[
+        %{label: "Transducers", navigate: ~p"/admin/transducers"},
+        %{label: @page_title}
+      ]} />
+      <.header>{@page_title}</.header>
 
-      <.form for={@form} id="transducer-form" phx-change="validate" phx-submit="save">
-        <.input field={@form[:name]} type="text" label="Name" />
-        <.file_drop upload={@uploads.file} />
-        <.input
-          field={@form[:source]}
-          type="textarea"
-          label="Source"
-          rows="18"
-          class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm"
-        />
-        <.input field={@form[:entry_place]} type="text" label="Entry place" />
-        <.input field={@form[:enabled]} type="checkbox" label="Enabled" />
-        <footer>
-          <.button phx-disable-with="Saving..." variant="primary">Save Transducer</.button>
+      <.form
+        for={@form}
+        id="transducer-form"
+        phx-change="validate"
+        phx-submit="save"
+        style="max-width:72ch"
+      >
+        <.fieldset
+          legend="Definition"
+          hint="A cpn-spec 1.0 net. Parsed and validated on every change."
+        >
+          <.input field={@form[:name]} type="text" label="Name" />
+          <.file_drop
+            upload={@uploads.file}
+            label="Drop a net or choose a file"
+            hint="tcl · cpn · up to 2 MB"
+          />
+          <.input field={@form[:source]} type="textarea" label="Source" rows="18" spellcheck="false" />
+          <.input field={@form[:entry_place]} type="text" label="Entry place" />
+          <.input field={@form[:enabled]} type="checkbox" label="Enabled" />
+        </.fieldset>
+        <footer class="mt-4 flex justify-end gap-2">
           <.button navigate={return_path(@return_to, @transducer)}>Cancel</.button>
+          <.button type="submit" variant={:primary} icon="m-check" phx-disable-with="Saving">
+            Save
+          </.button>
         </footer>
       </.form>
     </Layouts.app>
@@ -112,7 +122,7 @@ defmodule ActuatorWeb.TransducerLive.Form do
       {:ok, transducer} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Transducer updated successfully")
+         |> put_flash(:info, "Saved #{transducer.name}.")
          |> push_navigate(to: return_path(socket.assigns.return_to, transducer))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -125,7 +135,7 @@ defmodule ActuatorWeb.TransducerLive.Form do
       {:ok, transducer} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Transducer created successfully")
+         |> put_flash(:info, "Created #{transducer.name}.")
          |> push_navigate(to: return_path(socket.assigns.return_to, transducer))}
 
       {:error, %Ecto.Changeset{} = changeset} ->

@@ -1,123 +1,54 @@
 defmodule ActuatorWeb.CoreComponents do
   @moduledoc """
-  Provides core UI components.
+  Actuator's own components on top of `GosUi.Components`.
 
-  At first glance, this module may seem daunting, but its goal is to provide
-  core building blocks for your application, such as tables, forms, and
-  inputs. The components consist mostly of markup and are well-documented
-  with doc strings and declarative assigns. You may customize and style
-  them in any way you want, based on your application growth and needs.
-
-  The foundation for styling is Tailwind CSS, a utility-first CSS framework,
-  augmented with daisyUI, a Tailwind CSS plugin that provides UI components
-  and themes. Here are useful references:
-
-    * [daisyUI](https://daisyui.com/docs/intro/) - a good place to get
-      started and see the available components.
-
-    * [Tailwind CSS](https://tailwindcss.com) - the foundational framework
-      we build on. You will use it for layout, sizing, flexbox, grid, and
-      spacing.
-
-    * [Heroicons](https://heroicons.com) - see `icon/1` for usage.
-
-    * [Phoenix.Component](https://phoenix-live-view.hexdocs.pm/Phoenix.Component.html) -
-      the component system used by Phoenix. Some components, such as `<.link>`
-      and `<.form>`, are defined there.
-
+  gos-ui carries the GRID·OPS design system: tokens, the mark sprite, and the
+  component markup. What lives here is the Phoenix side it does not take yet: a
+  `Phoenix.HTML.FormField`, a LiveView upload, a stream, a navigating link.
+  Every class is the system's (`ds-*`) and every value is a token.
   """
   use Phoenix.Component
   use Gettext, backend: ActuatorWeb.Gettext
+
+  import GosUi.Components, only: [mark: 1, modal: 1]
 
   alias Phoenix.HTML.Form
   alias Phoenix.LiveView.JS
 
   @doc """
-  Renders flash notices.
-
-  ## Examples
-
-      <.flash kind={:info} flash={@flash} />
-      <.flash
-        id="welcome-back"
-        kind={:info}
-        phx-mounted={show("#welcome-back") |> JS.remove_attribute("hidden")}
-        hidden
-      >
-        Welcome Back!
-      </.flash>
+  A button, or a button-styled link when given `navigate`, `href`, or `patch`.
+  Variants and sizes are the system's; `danger` is the only control allowed to
+  wear `status/critical`.
   """
-  attr :id, :string, doc: "the optional id of flash container"
-  attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
-  attr :title, :string, default: nil
-  attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
-  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the flash container"
+  attr :variant, :atom, default: :ghost, values: [:primary, :ghost, :text, :danger]
+  attr :size, :atom, default: :md, values: [:sm, :md, :lg]
+  attr :icon, :string, default: nil, doc: "a mark id from the sprite"
+  attr :type, :string, default: "button"
 
-  slot :inner_block, doc: "the optional inner block that renders the flash message"
+  attr :rest, :global,
+    include: ~w(href navigate patch method disabled form name value phx-disable-with)
 
-  def flash(assigns) do
-    assigns = assign_new(assigns, :id, fn -> "flash-#{assigns.kind}" end)
-
-    ~H"""
-    <div
-      :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
-      id={@id}
-      phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
-      role="alert"
-      class="toast toast-top toast-end z-50"
-      {@rest}
-    >
-      <div class={[
-        "alert w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap",
-        @kind == :info && "alert-info",
-        @kind == :error && "alert-error"
-      ]}>
-        <.icon :if={@kind == :info} name="hero-information-circle" class="size-5 shrink-0" />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle" class="size-5 shrink-0" />
-        <div>
-          <p :if={@title} class="font-semibold">{@title}</p>
-          <p>{msg}</p>
-        </div>
-        <div class="flex-1" />
-        <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
-          <.icon name="hero-x-mark" class="size-5 opacity-40 group-hover:opacity-70" />
-        </button>
-      </div>
-    </div>
-    """
-  end
-
-  @doc """
-  Renders a button with navigation support.
-
-  ## Examples
-
-      <.button>Send!</.button>
-      <.button phx-click="go" variant="primary">Send!</.button>
-      <.button navigate={~p"/"}>Home</.button>
-  """
-  attr :rest, :global, include: ~w(href navigate patch method download name value disabled)
-  attr :class, :any
-  attr :variant, :string, values: ~w(primary)
   slot :inner_block, required: true
 
   def button(%{rest: rest} = assigns) do
-    variants = %{"primary" => "btn-primary", nil => "btn-primary btn-soft"}
-
     assigns =
-      assign_new(assigns, :class, fn ->
-        ["btn", Map.fetch!(variants, assigns[:variant])]
-      end)
+      assign(assigns, :class, [
+        "ds-btn",
+        "ds-btn--#{assigns.variant}",
+        assigns.size != :md && "ds-btn--#{assigns.size}"
+      ])
 
     if rest[:href] || rest[:navigate] || rest[:patch] do
       ~H"""
       <.link class={@class} {@rest}>
+        <.mark :if={@icon} name={@icon} size={16} />
         {render_slot(@inner_block)}
       </.link>
       """
     else
       ~H"""
-      <button class={@class} {@rest}>
+      <button type={@type} class={@class} {@rest}>
+        <.mark :if={@icon} name={@icon} size={16} />
         {render_slot(@inner_block)}
       </button>
       """
@@ -125,44 +56,12 @@ defmodule ActuatorWeb.CoreComponents do
   end
 
   @doc """
-  Renders an input with label and error messages.
+  A form field in the system's input anatomy: UPPERCASE label, the control,
+  and the error state as border + `m-critical` + message, never color alone.
 
-  A `Phoenix.HTML.FormField` may be passed as argument,
-  which is used to retrieve the input name, id, and values.
-  Otherwise all attributes may be passed explicitly.
-
-  ## Types
-
-  This function accepts all HTML input types, considering that:
-
-    * You may also set `type="select"` to render a `<select>` tag
-
-    * `type="checkbox"` is used exclusively to render boolean values
-
-    * For live file uploads, see `Phoenix.Component.live_file_input/1`
-
-  See https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input
-  for more information. Unsupported types, such as radio, are best
-  written directly in your templates.
-
-  ## Examples
-
-  ```heex
-  <.input field={@form[:email]} type="email" />
-  <.input name="my-input" errors={["oh no!"]} />
-  ```
-
-  ## Select type
-
-  When using `type="select"`, you must pass the `options` and optionally
-  a `value` to mark which option should be preselected.
-
-  ```heex
-  <.input field={@form[:user_type]} type="select" options={["Admin": "admin", "User": "user"]} />
-  ```
-
-  For more information on what kind of data can be passed to `options` see
-  [`options_for_select`](https://phoenix-html.hexdocs.pm/Phoenix.HTML.Form.html#options_for_select/2).
+      <.input field={@form[:name]} label="Name" />
+      <.input field={@form[:source]} type="textarea" rows="18" />
+      <.input field={@form[:enabled]} type="checkbox" label="Enabled" />
   """
   attr :id, :any, default: nil
   attr :name, :any
@@ -171,23 +70,16 @@ defmodule ActuatorWeb.CoreComponents do
 
   attr :type, :string,
     default: "text",
-    values: ~w(checkbox color date datetime-local email file month number password
-               search select tel text textarea time url week hidden)
+    values: ~w(checkbox hidden password select text textarea url)
 
-  attr :field, Phoenix.HTML.FormField,
-    doc: "a form field struct retrieved from the form, for example: @form[:email]"
-
+  attr :field, Phoenix.HTML.FormField, doc: "the form field, for example @form[:email]"
   attr :errors, :list, default: []
   attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
-  attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
-  attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
-  attr :class, :any, default: nil, doc: "the input class to use over defaults"
-  attr :error_class, :any, default: nil, doc: "the input error class to use over defaults"
+  attr :options, :list, default: [], doc: "options for `Form.options_for_select/2`"
 
   attr :rest, :global,
-    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
-                multiple pattern placeholder readonly required rows size step)
+    include: ~w(autocomplete disabled placeholder readonly required rows spellcheck)
 
   def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
     errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
@@ -195,7 +87,7 @@ defmodule ActuatorWeb.CoreComponents do
     assigns
     |> assign(field: nil, id: assigns.id || field.id)
     |> assign(:errors, Enum.map(errors, &translate_error(&1)))
-    |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
+    |> assign_new(:name, fn -> field.name end)
     |> assign_new(:value, fn -> field.value end)
     |> input()
   end
@@ -213,139 +105,142 @@ defmodule ActuatorWeb.CoreComponents do
       end)
 
     ~H"""
-    <div class="fieldset mb-2">
-      <label for={@id}>
+    <div class="ds-field">
+      <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
+      <label class="ds-check">
         <input
-          type="hidden"
+          type="checkbox"
+          id={@id}
           name={@name}
-          value="false"
-          disabled={@rest[:disabled]}
-          form={@rest[:form]}
+          value="true"
+          checked={@checked}
+          class="ds-check__input"
+          {@rest}
         />
-        <span class="label">
-          <input
-            type="checkbox"
-            id={@id}
-            name={@name}
-            value="true"
-            checked={@checked}
-            class={@class || "checkbox checkbox-sm"}
-            {@rest}
-          />{@label}
+        <span class="ds-check__box" aria-hidden="true">
+          <.mark name="m-low" size={14} class="ds-check__mark" />
         </span>
+        <span :if={@label}>{@label}</span>
       </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      <.field_errors errors={@errors} />
     </div>
     """
   end
 
   def input(%{type: "select"} = assigns) do
     ~H"""
-    <div class="fieldset mb-2">
-      <label for={@id}>
-        <span :if={@label} class="label mb-1">{@label}</span>
+    <div class={["ds-field", @errors != [] && "ds-field--error"]}>
+      <label :if={@label} class="ds-field__label" for={@id}>{@label}</label>
+      <div class="ds-select__wrap">
         <select
           id={@id}
           name={@name}
-          class={[@class || "w-full select", @errors != [] && (@error_class || "select-error")]}
-          multiple={@multiple}
+          class="ds-select"
+          aria-invalid={@errors != [] && "true"}
           {@rest}
         >
           <option :if={@prompt} value="">{@prompt}</option>
-          {Phoenix.HTML.Form.options_for_select(@options, @value)}
+          {Form.options_for_select(@options, @value)}
         </select>
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+        <span class="ds-select__chevron"><.mark name="m-chevron" size={16} /></span>
+      </div>
+      <.field_errors errors={@errors} />
     </div>
     """
   end
 
   def input(%{type: "textarea"} = assigns) do
     ~H"""
-    <div class="fieldset mb-2">
-      <label for={@id}>
-        <span :if={@label} class="label mb-1">{@label}</span>
+    <div class={["ds-field", @errors != [] && "ds-field--error"]}>
+      <label :if={@label} class="ds-field__label" for={@id}>{@label}</label>
+      <div class="ds-field__wrap">
         <textarea
           id={@id}
           name={@name}
-          class={[
-            @class || "w-full textarea",
-            @errors != [] && (@error_class || "textarea-error")
-          ]}
+          class="ds-input ds-textarea"
+          aria-invalid={@errors != [] && "true"}
           {@rest}
-        >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+        >{Form.normalize_value("textarea", @value)}</textarea>
+      </div>
+      <.field_errors errors={@errors} />
     </div>
     """
   end
 
-  # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     ~H"""
-    <div class="fieldset mb-2">
-      <label for={@id}>
-        <span :if={@label} class="label mb-1">{@label}</span>
+    <div class={["ds-field", @errors != [] && "ds-field--error"]}>
+      <label :if={@label} class="ds-field__label" for={@id}>{@label}</label>
+      <div class="ds-field__wrap">
         <input
           type={@type}
-          name={@name}
           id={@id}
-          value={Phoenix.HTML.Form.normalize_value(@type, @value)}
-          class={[
-            @class || "w-full input",
-            @errors != [] && (@error_class || "input-error")
-          ]}
+          name={@name}
+          value={Form.normalize_value(@type, @value)}
+          class="ds-input"
+          aria-invalid={@errors != [] && "true"}
           {@rest}
         />
-      </label>
-      <.error :for={msg <- @errors}>{msg}</.error>
+      </div>
+      <.field_errors errors={@errors} />
     </div>
     """
   end
 
-  # Helper used by inputs to generate form errors
-  defp error(assigns) do
+  attr :errors, :list, required: true
+
+  defp field_errors(assigns) do
     ~H"""
-    <p class="mt-1.5 flex gap-2 items-center text-sm text-error">
-      <.icon name="hero-exclamation-circle" class="size-5" />
-      {render_slot(@inner_block)}
-    </p>
+    <div :for={msg <- @errors} class="ds-field__msg">
+      <.mark name="m-critical" size={12} label="Error" />
+      <span>{msg}</span>
+    </div>
     """
   end
 
   @doc """
-  A drop zone for one text file. The file is uploaded as soon as it is chosen
-  or dropped; the owning LiveView reads it in its `:progress` callback.
+  The system's file drop around a real `<input type=file>`: a dashed target,
+  `m-upload`, a title, and the hint line the system requires. The file is
+  uploaded as soon as it is chosen or dropped; the owning LiveView reads it in
+  its `:progress` callback.
 
-  ```heex
-  <.file_drop upload={@uploads.file} />
-  ```
+      <.file_drop upload={@uploads.file} />
   """
   attr :upload, Phoenix.LiveView.UploadConfig, required: true
-  attr :label, :string, default: "Choose a file or drag one here"
+  attr :label, :string, default: "Drop a file or choose one"
+  attr :hint, :string, default: nil, doc: "what is accepted; defaults to the size limit"
 
   def file_drop(assigns) do
+    assigns =
+      assign_new(assigns, :hint, fn ->
+        "any text file · up to #{div(assigns.upload.max_file_size, 1_000_000)} MB"
+      end)
+
     ~H"""
-    <div
-      id={"#{@upload.ref}-drop"}
-      phx-drop-target={@upload.ref}
-      class="mt-2 flex flex-col items-center gap-2 rounded-md border-2 border-dashed border-zinc-300 px-4 py-6 text-sm text-zinc-600 transition-colors hover:border-zinc-500"
-    >
-      <.icon name="hero-arrow-up-tray" class="size-6 text-zinc-400" />
-      <label class="cursor-pointer">
-        <span class="font-medium text-zinc-900 underline">{@label}</span>
-        <.live_file_input upload={@upload} class="sr-only" />
+    <div class="ds-field">
+      <label class="ds-drop" id={"#{@upload.ref}-drop"} phx-drop-target={@upload.ref}>
+        <.mark name="m-upload" size={24} />
+        <span class="ds-drop__title">{@label}</span>
+        <span>{@hint}</span>
+        <.live_file_input upload={@upload} class="ds-drop__input" />
       </label>
-      <.error :for={err <- upload_errors(@upload)}>{upload_error(err)}</.error>
-      <.error :for={{entry, err} <- entry_errors(@upload)}>
-        {entry.client_name}: {upload_error(err)}
-      </.error>
+      <ul :if={@upload.entries != []} class="ds-drop__files">
+        <li :for={entry <- @upload.entries}>
+          <.mark name={if(entry.done?, do: "m-check", else: "m-refresh")} size={12} />
+          {entry.client_name}
+          <progress :if={!entry.done?} class="ds-progress" value={entry.progress} max="100"></progress>
+        </li>
+      </ul>
+      <.field_errors errors={drop_errors(@upload)} />
     </div>
     """
   end
 
-  defp entry_errors(upload) do
-    for entry <- upload.entries, err <- upload_errors(upload, entry), do: {entry, err}
+  defp drop_errors(upload) do
+    Enum.map(upload_errors(upload), &upload_error/1) ++
+      for entry <- upload.entries,
+          err <- upload_errors(upload, entry),
+          do: "#{entry.client_name}: #{upload_error(err)}"
   end
 
   defp upload_error(:too_large), do: "file is too large"
@@ -354,7 +249,57 @@ defmodule ActuatorWeb.CoreComponents do
   defp upload_error(other), do: to_string(other)
 
   @doc """
-  Renders a header with title.
+  A code block with a head row and a copy button. The copy swaps glyph and
+  word for two seconds, never color alone.
+
+      <.code_block id="source" title="cpn-spec 1.0">{@transducer.source}</.code_block>
+  """
+  attr :id, :string, required: true
+  attr :title, :string, default: nil
+  slot :inner_block, required: true
+
+  def code_block(assigns) do
+    ~H"""
+    <div class="ds-code" id={@id}>
+      <div class="ds-code__head">
+        <span>{@title}</span>
+        <button
+          type="button"
+          class="ds-copy"
+          id={"#{@id}-copy"}
+          phx-hook=".Copy"
+          phx-update="ignore"
+          data-target={"#{@id}-pre"}
+        >
+          <.mark name="m-copy" size={14} /><span>copy</span>
+        </button>
+      </div>
+      <pre id={"#{@id}-pre"} phx-no-curly-interpolation><%= render_slot(@inner_block) %></pre>
+    </div>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".Copy">
+      export default {
+        mounted() {
+          this.el.addEventListener("click", () => {
+            const pre = document.getElementById(this.el.dataset.target)
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+              const word = this.el.querySelector("span")
+              const use = this.el.querySelector("use")
+              word.textContent = "copied"
+              use.setAttribute("href", "#m-check")
+              setTimeout(() => {
+                word.textContent = "copy"
+                use.setAttribute("href", "#m-copy")
+              }, 2000)
+            })
+          })
+        }
+      }
+    </script>
+    """
+  end
+
+  @doc """
+  The page header: an h1, optional actions on the right, optional subtitle.
   """
   slot :inner_block, required: true
   slot :subtitle
@@ -362,44 +307,67 @@ defmodule ActuatorWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4"]}>
-      <div>
-        <h1 class="text-lg font-semibold leading-8">
-          {render_slot(@inner_block)}
-        </h1>
-        <p :if={@subtitle != []} class="text-sm text-base-content/70">
-          {render_slot(@subtitle)}
-        </p>
-      </div>
-      <div class="flex-none">{render_slot(@actions)}</div>
+    <header class="mb-6 flex flex-wrap items-center gap-4">
+      <h1 style="font-size:var(--text-h3)">{render_slot(@inner_block)}</h1>
+      <div :if={@actions != []} class="ml-auto flex gap-2">{render_slot(@actions)}</div>
+      <p
+        :if={@subtitle != []}
+        class="basis-full"
+        style="margin:0;color:var(--muted);font-size:var(--text-small)"
+      >
+        {render_slot(@subtitle)}
+      </p>
     </header>
     """
   end
 
   @doc """
-  Renders a table with generic styling.
+  An instance's lifecycle state as a chrome tag: glyph + word. Lifecycle is
+  not a severity, so this is not the status badge; `<.status_badge>` is for
+  health.
+  """
+  attr :state, :atom, required: true, doc: ":running | :busy | :quiescent | nil"
 
-  ## Examples
+  def state_tag(assigns) do
+    {icon, word} =
+      case assigns.state do
+        :running -> {"m-run", "running"}
+        :busy -> {"m-refresh", "busy"}
+        :quiescent -> {"m-check", "quiescent"}
+        nil -> {"m-system", "stopped"}
+      end
 
-      <.table id="users" rows={@users}>
-        <:col :let={user} label="id">{user.id}</:col>
-        <:col :let={user} label="username">{user.username}</:col>
+    assigns = assign(assigns, icon: icon, word: word)
+
+    ~H"""
+    <span class={["ds-tag", @state in [:running, :busy] && "ds-tag--accent"]} data-role="status">
+      <.mark name={@icon} size={12} />
+      <span>{@word}</span>
+    </span>
+    """
+  end
+
+  @doc """
+  The system's table over a list or a LiveView stream, with a DOM id per row
+  and the empty state as one full-width row.
+
+      <.table id="transducers" rows={@streams.transducers}>
+        <:col :let={{_id, t}} label="Name">{t.name}</:col>
+        <:empty>No transducers.</:empty>
       </.table>
   """
   attr :id, :string, required: true
-  attr :rows, :list, required: true
+  attr :rows, :any, required: true
   attr :row_id, :any, default: nil, doc: "the function for generating the row id"
   attr :row_click, :any, default: nil, doc: "the function for handling phx-click on each row"
-
-  attr :row_item, :any,
-    default: &Function.identity/1,
-    doc: "the function for mapping each row before calling the :col and :action slots"
+  attr :density, :atom, default: :compact, values: [:comfortable, :compact, :dense]
 
   slot :col, required: true do
     attr :label, :string
   end
 
   slot :action, doc: "the slot for showing user actions in the last table column"
+  slot :empty, doc: "rendered as the only row when there are no rows"
 
   def table(assigns) do
     assigns =
@@ -408,30 +376,35 @@ defmodule ActuatorWeb.CoreComponents do
       end
 
     ~H"""
-    <table class="table table-zebra">
+    <table class={["ds-table", @density != :comfortable && "ds-table--#{@density}"]}>
       <thead>
         <tr>
-          <th :for={col <- @col}>{col[:label]}</th>
-          <th :if={@action != []}>
+          <th :for={col <- @col} scope="col" class="ds-table__th">{col[:label]}</th>
+          <th :if={@action != []} scope="col" class="ds-table__th">
             <span class="sr-only">{gettext("Actions")}</span>
           </th>
         </tr>
       </thead>
       <tbody id={@id} phx-update={is_struct(@rows, Phoenix.LiveView.LiveStream) && "stream"}>
-        <tr :for={row <- @rows} id={@row_id && @row_id.(row)}>
-          <td
-            :for={col <- @col}
-            phx-click={@row_click && @row_click.(row)}
-            class={@row_click && "hover:cursor-pointer"}
-          >
-            {render_slot(col, @row_item.(row))}
+        <tr
+          :for={row <- @rows}
+          id={@row_id && @row_id.(row)}
+          class={["ds-table__row", @row_click && "ds-table__row--interactive"]}
+        >
+          <td :for={col <- @col} class="ds-table__td" phx-click={@row_click && @row_click.(row)}>
+            {render_slot(col, row)}
           </td>
-          <td :if={@action != []} class="w-0 font-semibold">
-            <div class="flex gap-4">
+          <td :if={@action != []} class="ds-table__td" style="width:0;white-space:nowrap">
+            <div class="flex gap-2">
               <%= for action <- @action do %>
-                {render_slot(action, @row_item.(row))}
+                {render_slot(action, row)}
               <% end %>
             </div>
+          </td>
+        </tr>
+        <tr :if={@empty != []} id={"#{@id}-empty"} class="hidden only:table-row">
+          <td class="ds-table__td ds-table__state" colspan={length(@col) + 1}>
+            {render_slot(@empty)}
           </td>
         </tr>
       </tbody>
@@ -440,96 +413,59 @@ defmodule ActuatorWeb.CoreComponents do
   end
 
   @doc """
-  Renders a data list.
-
-  ## Examples
-
-      <.list>
-        <:item title="Title">{@post.title}</:item>
-        <:item title="Views">{@post.views}</:item>
-      </.list>
-  """
-  slot :item, required: true do
-    attr :title, :string, required: true
-  end
-
-  def list(assigns) do
-    ~H"""
-    <ul class="list">
-      <li :for={item <- @item} class="list-row">
-        <div class="list-col-grow">
-          <div class="font-bold">{item.title}</div>
-          <div>{render_slot(item)}</div>
-        </div>
-      </li>
-    </ul>
-    """
-  end
-
-  @doc """
-  Renders a [Heroicon](https://heroicons.com).
-
-  Heroicons come in three styles – outline, solid, and mini.
-  By default, the outline style is used, but solid and mini may
-  be applied by using the `-solid` and `-mini` suffix.
-
-  You can customize the size and colors of the icons by setting
-  width, height, and background color classes.
-
-  Icons are extracted from the `deps/heroicons` directory and bundled within
-  your compiled app.css by the plugin in `assets/vendor/heroicons.js`.
-
-  ## Examples
-
-      <.icon name="hero-x-mark" />
-      <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
+  The destructive-confirm flow: names the target, states the consequence and
+  irreversibility, and gates the verb button on typing the name. The owner
+  handles `confirm-name` (`%{"name" => typed}`), `cancel-delete`, and `delete`.
   """
   attr :name, :string, required: true
-  attr :class, :any, default: "size-4"
+  attr :consequence, :string, required: true
+  attr :typed, :string, default: ""
 
-  def icon(%{name: "hero-" <> _} = assigns) do
+  def delete_modal(assigns) do
     ~H"""
-    <span class={[@name, @class]} />
+    <.modal
+      id="delete-modal"
+      show
+      destructive
+      title={"Delete #{@name}?"}
+      on_cancel={JS.push("cancel-delete")}
+    >
+      <p style="margin:0 0 var(--space-2)">{@consequence} This can't be undone.</p>
+      <form id="delete-confirm" phx-change="confirm-name" phx-submit="delete">
+        <div class="ds-field">
+          <label class="ds-field__label" for="delete-confirm-name">Type the name to confirm</label>
+          <div class="ds-field__wrap">
+            <input
+              id="delete-confirm-name"
+              name="name"
+              value={@typed}
+              class="ds-input"
+              autocomplete="off"
+              placeholder={@name}
+            />
+          </div>
+        </div>
+      </form>
+      <:footer>
+        <.button phx-click="cancel-delete">Cancel</.button>
+        <.button
+          variant={:danger}
+          icon="m-delete"
+          type="submit"
+          form="delete-confirm"
+          disabled={@typed != @name}
+        >
+          Delete
+        </.button>
+      </:footer>
+    </.modal>
     """
-  end
-
-  ## JS Commands
-
-  def show(js \\ %JS{}, selector) do
-    JS.show(js,
-      to: selector,
-      time: 300,
-      transition:
-        {"transition-all ease-out duration-300",
-         "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
-         "opacity-100 translate-y-0 sm:scale-100"}
-    )
-  end
-
-  def hide(js \\ %JS{}, selector) do
-    JS.hide(js,
-      to: selector,
-      time: 200,
-      transition:
-        {"transition-all ease-in duration-200", "opacity-100 translate-y-0 sm:scale-100",
-         "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"}
-    )
   end
 
   @doc """
   Translates an error message using gettext.
   """
   def translate_error({msg, opts}) do
-    # When using gettext, we typically pass the strings we want
-    # to translate as a static argument:
-    #
-    #     # Translate the number of files with plural rules
-    #     dngettext("errors", "1 file", "%{count} files", count)
-    #
-    # However the error messages in our forms and APIs are generated
-    # dynamically, so we need to translate them by calling Gettext
-    # with our gettext backend as first argument. Translations are
-    # available in the errors.po file (as we use the "errors" domain).
     if count = opts[:count] do
       Gettext.dngettext(ActuatorWeb.Gettext, "errors", msg, msg, count, opts)
     else

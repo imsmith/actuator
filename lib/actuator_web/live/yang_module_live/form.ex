@@ -8,28 +8,36 @@ defmodule ActuatorWeb.YangModuleLive.Form do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
-      <.header>
-        {@page_title}
-        <:subtitle>
-          A YANG module (RFC 7950). Its <code>module</code>
-          name and <code>prefix</code>
-          are read from the source.
-        </:subtitle>
-      </.header>
+    <Layouts.app flash={@flash} section={:yang_modules}>
+      <.breadcrumb items={[
+        %{label: "YANG modules", navigate: ~p"/admin/yang_modules"},
+        %{label: @page_title}
+      ]} />
+      <.header>{@page_title}</.header>
 
-      <.form for={@form} id="yang_module-form" phx-change="validate" phx-submit="save">
-        <.file_drop upload={@uploads.file} />
-        <.input
-          field={@form[:source]}
-          type="textarea"
-          label="Source"
-          rows="18"
-          class="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm"
-        />
-        <footer>
-          <.button phx-disable-with="Saving..." variant="primary">Save YANG module</.button>
+      <.form
+        for={@form}
+        id="yang_module-form"
+        phx-change="validate"
+        phx-submit="save"
+        style="max-width:72ch"
+      >
+        <.fieldset
+          legend="Module"
+          hint="A YANG module (RFC 7950). Its module name and prefix are read from the source."
+        >
+          <.file_drop
+            upload={@uploads.file}
+            label="Drop a module or choose a file"
+            hint="yang · up to 2 MB"
+          />
+          <.input field={@form[:source]} type="textarea" label="Source" rows="18" spellcheck="false" />
+        </.fieldset>
+        <footer class="mt-4 flex justify-end gap-2">
           <.button navigate={return_path(@return_to, @yang_module)}>Cancel</.button>
+          <.button type="submit" variant={:primary} icon="m-check" phx-disable-with="Saving">
+            Save
+          </.button>
         </footer>
       </.form>
     </Layouts.app>
@@ -100,7 +108,7 @@ defmodule ActuatorWeb.YangModuleLive.Form do
       {:ok, m} ->
         {:noreply,
          socket
-         |> put_flash(:info, "YANG module updated successfully")
+         |> put_flash(:info, "Saved #{m.name}.")
          |> push_navigate(to: return_path(socket.assigns.return_to, m))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -113,7 +121,7 @@ defmodule ActuatorWeb.YangModuleLive.Form do
       {:ok, m} ->
         {:noreply,
          socket
-         |> put_flash(:info, "YANG module created successfully")
+         |> put_flash(:info, "Created #{m.name}.")
          |> push_navigate(to: return_path(socket.assigns.return_to, m))}
 
       {:error, %Ecto.Changeset{} = changeset} ->

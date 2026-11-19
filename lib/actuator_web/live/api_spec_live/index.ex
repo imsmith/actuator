@@ -7,12 +7,13 @@ defmodule ActuatorWeb.ApiSpecLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} section={:api_specs}>
       <.header>
         API specs
+        <:subtitle>OpenAPI 3 documents for the things behind the gateway.</:subtitle>
         <:actions>
-          <.button variant="primary" navigate={~p"/admin/api_specs/new"}>
-            <.icon name="hero-plus" /> New API spec
+          <.button variant={:primary} icon="m-add" navigate={~p"/admin/api_specs/new"}>
+            New API spec
           </.button>
         </:actions>
       </.header>
@@ -22,28 +23,45 @@ defmodule ActuatorWeb.ApiSpecLive.Index do
         rows={@streams.api_specs}
         row_click={fn {_id, api_spec} -> JS.navigate(~p"/admin/api_specs/#{api_spec}") end}
       >
-        <:col :let={{_id, api_spec}} label="Name">
-          <span class="font-mono">{api_spec.name}</span>
+        <:col :let={{_id, api_spec}} label="Name">{api_spec.name}</:col>
+        <:col :let={{_id, api_spec}} label="Base URL">{api_spec.base_url}</:col>
+        <:col :let={{_id, api_spec}} label="Operations">
+          <span class="ds-data">{api_spec.operation_count}</span>
         </:col>
-        <:col :let={{_id, api_spec}} label="Base URL">
-          <span class="font-mono text-xs">{api_spec.base_url}</span>
-        </:col>
-        <:col :let={{_id, api_spec}} label="Operations">{api_spec.operation_count}</:col>
         <:action :let={{_id, api_spec}}>
-          <div class="sr-only">
-            <.link navigate={~p"/admin/api_specs/#{api_spec}"}>Show</.link>
-          </div>
-          <.link navigate={~p"/admin/api_specs/#{api_spec}/edit"}>Edit</.link>
+          <.button size={:sm} icon="m-edit" navigate={~p"/admin/api_specs/#{api_spec}/edit"}>
+            Edit
+          </.button>
         </:action>
-        <:action :let={{id, api_spec}}>
-          <.link
-            phx-click={JS.push("delete", value: %{id: api_spec.id}) |> hide("##{id}")}
-            data-confirm="Are you sure?"
+        <:action :let={{_id, api_spec}}>
+          <.button
+            size={:sm}
+            variant={:text}
+            icon="m-delete"
+            phx-click="confirm-delete"
+            phx-value-id={api_spec.id}
           >
             Delete
-          </.link>
+          </.button>
         </:action>
+        <:empty>
+          <.state_panel title="No API specs.">
+            Upload the OpenAPI document of a thing to bind transitions to its operations.
+            <:action>
+              <.button variant={:primary} icon="m-add" navigate={~p"/admin/api_specs/new"}>
+                New API spec
+              </.button>
+            </:action>
+          </.state_panel>
+        </:empty>
       </.table>
+
+      <.delete_modal
+        :if={@deleting}
+        name={@deleting.name}
+        consequence="Every binding to its operations is removed."
+        typed={@typed}
+      />
     </Layouts.app>
     """
   end
@@ -52,17 +70,38 @@ defmodule ActuatorWeb.ApiSpecLive.Index do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:page_title, "API specs")
+     |> assign(page_title: "API specs", deleting: nil, typed: "")
      |> stream(:api_specs, list_api_specs())}
   end
 
   @impl true
-  def handle_event("delete", %{"id" => id}, socket) do
-    api_spec = ApiSpecs.get_api_spec!(id)
-    {:ok, _} = ApiSpecs.delete_api_spec(api_spec)
-
-    {:noreply, stream_delete(socket, :api_specs, api_spec)}
+  def handle_event("confirm-delete", %{"id" => id}, socket) do
+    {:noreply, assign(socket, deleting: ApiSpecs.get_api_spec!(id), typed: "")}
   end
+
+  def handle_event("confirm-name", %{"name" => typed}, socket) do
+    {:noreply, assign(socket, :typed, typed)}
+  end
+
+  def handle_event("cancel-delete", _params, socket) do
+    {:noreply, assign(socket, deleting: nil, typed: "")}
+  end
+
+  def handle_event(
+        "delete",
+        %{"name" => name},
+        %{assigns: %{deleting: %{name: name} = s}} = socket
+      ) do
+    {:ok, _} = ApiSpecs.delete_api_spec(s)
+
+    {:noreply,
+     socket
+     |> assign(deleting: nil, typed: "")
+     |> put_flash(:info, "Deleted #{name}.")
+     |> stream_delete(:api_specs, s)}
+  end
+
+  def handle_event("delete", _params, socket), do: {:noreply, socket}
 
   defp list_api_specs do
     Enum.map(ApiSpecs.list_api_specs(), fn s ->

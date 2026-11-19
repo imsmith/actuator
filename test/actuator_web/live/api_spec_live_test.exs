@@ -22,7 +22,7 @@ defmodule ActuatorWeb.ApiSpecLiveTest do
     {:ok, index_live, _} = live(conn, ~p"/admin/api_specs")
 
     {:ok, form_live, _} =
-      index_live |> element("a", "New API spec") |> render_click() |> follow_redirect(conn)
+      index_live |> element("header a", "New API spec") |> render_click() |> follow_redirect(conn)
 
     html = form_live |> form("#api_spec-form", api_spec: @invalid_attrs) |> render_change()
     assert html =~ "Swagger 2.0 is not supported"
@@ -33,7 +33,7 @@ defmodule ActuatorWeb.ApiSpecLiveTest do
       |> render_submit()
       |> follow_redirect(conn)
 
-    assert html =~ "API spec created successfully"
+    assert html =~ "Created ping."
   end
 
   test "uploading a file fills source", %{conn: conn} do
@@ -55,7 +55,10 @@ defmodule ActuatorWeb.ApiSpecLiveTest do
 
   test "deletes from the index", %{conn: conn, api_spec: spec} do
     {:ok, view, _} = live(conn, ~p"/admin/api_specs")
-    assert view |> element("#api_specs-#{spec.id} a", "Delete") |> render_click()
+    view |> element("#api_specs-#{spec.id} button", "Delete") |> render_click()
+    view |> form("#delete-confirm", name: "wrong") |> render_submit()
+    assert has_element?(view, "#api_specs-#{spec.id}")
+    view |> form("#delete-confirm", name: spec.name) |> render_submit()
     refute has_element?(view, "#api_specs-#{spec.id}")
   end
 end
