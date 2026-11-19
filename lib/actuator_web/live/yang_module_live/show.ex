@@ -34,7 +34,7 @@ defmodule ActuatorWeb.YangModuleLive.Show do
         </:item>
       </.key_value>
 
-      <.code_block id="source" title="source · yang">{@yang_module.source}</.code_block>
+      <.code_block id="source" title="source · yang" code={@yang_module.source} />
     </Layouts.app>
     """
   end

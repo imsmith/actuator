@@ -139,7 +139,7 @@ defmodule ActuatorWeb.TransducerLive.Show do
         </table>
       </.card>
 
-      <.code_block id="source" title="source · cpn-spec 1.0">{@transducer.source}</.code_block>
+      <.code_block id="source" title="source · cpn-spec 1.0" code={@transducer.source} />
     </Layouts.app>
     """
   end

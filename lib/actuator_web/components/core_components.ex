@@ -252,11 +252,11 @@ defmodule ActuatorWeb.CoreComponents do
   A code block with a head row and a copy button. The copy swaps glyph and
   word for two seconds, never color alone.
 
-      <.code_block id="source" title="cpn-spec 1.0">{@transducer.source}</.code_block>
+      <.code_block id="source" title="cpn-spec 1.0" code={@transducer.source} />
   """
   attr :id, :string, required: true
   attr :title, :string, default: nil
-  slot :inner_block, required: true
+  attr :code, :string, required: true
 
   def code_block(assigns) do
     ~H"""
@@ -274,7 +274,7 @@ defmodule ActuatorWeb.CoreComponents do
           <.mark name="m-copy" size={14} /><span>copy</span>
         </button>
       </div>
-      <pre id={"#{@id}-pre"} phx-no-curly-interpolation><%= render_slot(@inner_block) %></pre>
+      <pre id={"#{@id}-pre"}>{@code}</pre>
     </div>
     <script :type={Phoenix.LiveView.ColocatedHook} name=".Copy">
       export default {

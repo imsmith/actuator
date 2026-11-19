@@ -48,7 +48,7 @@ defmodule ActuatorWeb.ApiSpecLive.Show do
         </table>
       </.card>
 
-      <.code_block id="source" title="source · openapi">{@api_spec.source}</.code_block>
+      <.code_block id="source" title="source · openapi" code={@api_spec.source} />
     </Layouts.app>
     """
   end

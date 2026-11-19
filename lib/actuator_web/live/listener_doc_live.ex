@@ -29,15 +29,15 @@ defmodule ActuatorWeb.ListenerDocLive do
       </.state_panel>
 
       <.card :for={t <- @transducers} id={"doc-#{t.name}"} density={:compact} class="mb-4">
-        <:actions><.state_tag state={t.state} /></:actions>
-        <h2 class="ds-label mb-2">POST /t/{t.name}</h2>
+        <div class="mb-2 flex items-center gap-4">
+          <h2 style="font-size:var(--text-body)">POST /t/{t.name}</h2>
+          <.state_tag state={t.state} />
+        </div>
         <.key_value density={:dense} class="mb-2">
           <:item key="Body">one token on {t.entry_place}</:item>
           <:item key="Reply">202 · the place name</:item>
         </.key_value>
-        <.code_block id={"curl-#{t.name}"} title="curl">
-          {ListenerSpec.curl(t, @base_url)}
-        </.code_block>
+        <.code_block id={"curl-#{t.name}"} title="curl" code={ListenerSpec.curl(t, @base_url)} />
       </.card>
     </Layouts.app>
     """
