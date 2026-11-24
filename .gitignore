@@ -10,6 +10,9 @@
 # Where 3rd-party dependencies like ExDoc output generated docs.
 /doc/
 
+# Iris code-visualization output; `mix docs` regenerates and copies it into doc/.
+/iris/
+
 # Ignore .fetch files in case you like to edit your project deps locally.
 /.fetch
 

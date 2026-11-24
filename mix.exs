@@ -71,6 +71,7 @@ defmodule Actuator.MixProject do
       {:sobelow, "~> 0.18", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:iris, "~> 0.2", only: :dev, runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end
@@ -78,7 +79,8 @@ defmodule Actuator.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md", "ISSUES.md"],
+      # IrisUI.md is an empty placeholder; `mix docs` (alias of iris.docs) fills irisui.html.
+      extras: ["README.md", "ISSUES.md", "IrisUI.md"],
       groups_for_modules: [
         Transducers: [
           Actuator.Transducers,
@@ -145,6 +147,7 @@ defmodule Actuator.MixProject do
         "phx.digest"
       ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"],
+      docs: ["iris.docs"],
       quality: ["credo --strict", "sobelow --skip --exit", "dialyzer"]
     ]
   end
